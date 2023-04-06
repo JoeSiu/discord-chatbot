@@ -13,9 +13,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-# Create Discord guild object
-DISCORD_SERVER_GUILD = discord.Object(id=config.SERVER_GUILD_ID)
-
 # Create Hugging Face chatbot object
 chatbot = ChatBot(config.HUGGING_FACE_MODEL, config.HUGGING_FACE_API_TOKEN)
 
