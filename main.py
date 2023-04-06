@@ -100,14 +100,15 @@ async def reset_token(interaction):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="talk", description="Talk to the chatbot", guild=DISCORD_GUILD)
-async def talk(interaction, message: str):
+@tree.command(name="clear-context", description="Clear context", guild=DISCORD_GUILD)
+async def clear_context(interaction):
     """
-    Command to talk to the chatbot.
+    Command to clear the context of the chatbot.
     """
-    response = chatbot.get_response(message)
-    logger.info(f"Chatbot response: {response}")
-    await interaction.response.send_message(response)
+    chatbot.clear_context()
+    message = "Context has been cleared"
+    logger.info(message)
+    await interaction.response.send_message(message)
 
 # Discord client events
 
