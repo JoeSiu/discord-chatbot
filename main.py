@@ -25,7 +25,7 @@ tree = app_commands.CommandTree(client)
 # Define command tree functions
 
 
-@tree.command(name="get-model", description="Get the current Hugging Face model", guild=DISCORD_SERVER_GUILD)
+@tree.command(name="get-model", description="Get the current Hugging Face model")
 async def get_model(interaction):
     """
     Command to get the current Hugging Face model.
@@ -36,7 +36,7 @@ async def get_model(interaction):
     await interaction.response.send_message(message)
 
 
-@tree.command(name="change-model", description="Change Hugging Face model", guild=DISCORD_SERVER_GUILD)
+@tree.command(name="change-model", description="Change Hugging Face model")
 async def change_model(interaction, model_name: str):
     """
     Command to change the Hugging Face model.
@@ -52,7 +52,7 @@ async def change_model(interaction, model_name: str):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="reset-model", description="Reset the current Hugging Face model to the default one", guild=DISCORD_SERVER_GUILD)
+@tree.command(name="reset-model", description="Reset the current Hugging Face model to the default one")
 async def reset_model(interaction):
     """
     Command to reset the Hugging Face model to the default one.
@@ -68,7 +68,7 @@ async def reset_model(interaction):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="change-token", description="Change Hugging Face API token", guild=DISCORD_SERVER_GUILD)
+@tree.command(name="change-token", description="Change Hugging Face API token")
 async def change_token(interaction, token: str):
     """
     Command to change the Hugging Face API token.
@@ -84,7 +84,7 @@ async def change_token(interaction, token: str):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="reset-token", description="Reset the Hugging Face API token to the default one", guild=DISCORD_SERVER_GUILD)
+@tree.command(name="reset-token", description="Reset the Hugging Face API token to the default one")
 async def reset_token(interaction):
     """
     Command to reset the Hugging Face API token to the default one.
@@ -100,7 +100,7 @@ async def reset_token(interaction):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="clear-context", description="Clear context", guild=DISCORD_SERVER_GUILD)
+@tree.command(name="clear-context", description="Clear context")
 async def clear_context(interaction):
     """
     Command to clear the context of the chatbot.
@@ -121,7 +121,7 @@ async def on_ready():
     logger.info(f'Logged in as {client.user}')
 
     # Register the command tree for Discord slash commands
-    await tree.sync(guild=DISCORD_SERVER_GUILD)
+    await tree.sync()
 
 
 @client.event
