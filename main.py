@@ -14,7 +14,7 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 # Create Discord guild object
-DISCORD_GUILD = discord.Object(id=config.GUILD_ID)
+DISCORD_SERVER_GUILD = discord.Object(id=config.SERVER_GUILD_ID)
 
 # Create Hugging Face chatbot object
 chatbot = ChatBot(config.HUGGING_FACE_MODEL, config.HUGGING_FACE_API_TOKEN)
@@ -25,7 +25,7 @@ tree = app_commands.CommandTree(client)
 # Define command tree functions
 
 
-@tree.command(name="get-model", description="Get the current Hugging Face model", guild=DISCORD_GUILD)
+@tree.command(name="get-model", description="Get the current Hugging Face model", guild=DISCORD_SERVER_GUILD)
 async def get_model(interaction):
     """
     Command to get the current Hugging Face model.
@@ -36,7 +36,7 @@ async def get_model(interaction):
     await interaction.response.send_message(message)
 
 
-@tree.command(name="change-model", description="Change Hugging Face model", guild=DISCORD_GUILD)
+@tree.command(name="change-model", description="Change Hugging Face model", guild=DISCORD_SERVER_GUILD)
 async def change_model(interaction, model_name: str):
     """
     Command to change the Hugging Face model.
@@ -48,11 +48,11 @@ async def change_model(interaction, model_name: str):
         await interaction.response.send_message(message)
     else:
         message = f"Model `{model_name}` is invalid, please visit https://huggingface.co/models?pipeline_tag=conversational to get a list of available models."
-        logger.info(message)
+        logger.warning(message)
         await interaction.response.send_message(message)
 
 
-@tree.command(name="reset-model", description="Reset the current Hugging Face model to the default one", guild=DISCORD_GUILD)
+@tree.command(name="reset-model", description="Reset the current Hugging Face model to the default one", guild=DISCORD_SERVER_GUILD)
 async def reset_model(interaction):
     """
     Command to reset the Hugging Face model to the default one.
@@ -68,7 +68,7 @@ async def reset_model(interaction):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="change-token", description="Change Hugging Face API token", guild=DISCORD_GUILD)
+@tree.command(name="change-token", description="Change Hugging Face API token", guild=DISCORD_SERVER_GUILD)
 async def change_token(interaction, token: str):
     """
     Command to change the Hugging Face API token.
@@ -84,7 +84,7 @@ async def change_token(interaction, token: str):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="reset-token", description="Reset the Hugging Face API token to the default one", guild=DISCORD_GUILD)
+@tree.command(name="reset-token", description="Reset the Hugging Face API token to the default one", guild=DISCORD_SERVER_GUILD)
 async def reset_token(interaction):
     """
     Command to reset the Hugging Face API token to the default one.
@@ -100,7 +100,7 @@ async def reset_token(interaction):
         await interaction.response.send_message(message)
 
 
-@tree.command(name="clear-context", description="Clear context", guild=DISCORD_GUILD)
+@tree.command(name="clear-context", description="Clear context", guild=DISCORD_SERVER_GUILD)
 async def clear_context(interaction):
     """
     Command to clear the context of the chatbot.
@@ -121,7 +121,7 @@ async def on_ready():
     logger.info(f'Logged in as {client.user}')
 
     # Register the command tree for Discord slash commands
-    await tree.sync(guild=DISCORD_GUILD)
+    await tree.sync(guild=DISCORD_SERVER_GUILD)
 
 
 @client.event
@@ -131,30 +131,33 @@ async def on_message(message):
 
     If the message is not sent by the bot itself, get a response from the chatbot and send it to the same channel.
     """
-    # Ignore messages sent by the bot itself
-    if message.author == client.user:
-        return
-
-    # Get response from chatbot
-    user_input = message.content
-    logger.info(f"Input: {user_input}")
-    async with message.channel.typing():
-        try:
-            success, bot_response = await chatbot.query(user_input, debug=config.DEBUG)
-        except Exception as e:
-            logger.error(f"Error: {e}")
-            await message.channel.send(content="Sorry, an error occurred while processing your request.\n`{e}`")
+    try:
+        # Ignore messages sent by the bot itself
+        if message.author == client.user:
             return
 
-    # Send response to the same channel
-    if success:
-        logger.info(f"Response: {bot_response}")
-        await message.channel.send(content=str(bot_response))
-    else:
-        logger.error(f"Error response: {bot_response}")
-        error_message = f"Sorry, your request couldn't be processed.\n`{str(bot_response)}`"
-        await message.channel.send(content=error_message)
+        # Get response from chatbot
+        user_input = message.content
+        logger.info(f"Input: {user_input}")
+        async with message.channel.typing():
+            try:
+                success, bot_response = await chatbot.query(user_input, debug=config.DEBUG)
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                await message.channel.send(content="Sorry, an error occurred while processing your request.\n`{e}`")
+                return
 
+        # Send response to the same channel
+        if success:
+            logger.info(f"Response: {bot_response}")
+            await message.channel.send(content=str(bot_response))
+        else:
+            logger.error(f"Error response: {bot_response}")
+            error_message = f"Sorry, your request couldn't be processed.\n`{str(bot_response)}`"
+            await message.channel.send(content=error_message)
+    except Exception as e:
+         logger.error(f"on_message Error: {e}")
+         await message.channel.send(content=f"Sorry, fail to process your request.\n`{e}`")
 
 def main():
     client.run(config.DISCORD_TOKEN)
