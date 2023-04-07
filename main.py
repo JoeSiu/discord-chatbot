@@ -1,7 +1,9 @@
+import argparse
 import discord
 from discord import app_commands
 import config
-from chatbot import ChatBot
+from chatbots.hugging_face_chatbot import HuggingFaceChatBot
+from chatbots.poe_chatbot import PoeChatBot
 import logging
 
 # Setup logger
@@ -13,30 +15,53 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
-# Create Hugging Face chatbot object
-chatbot = ChatBot(config.HUGGING_FACE_MODEL, config.HUGGING_FACE_API_TOKEN)
+# Create chatbot object
+chatbot = None
 
 # Create command tree for Discord slash commands
 tree = app_commands.CommandTree(client)
 
 # Define command tree functions
 
+@tree.command(name="get-bot", description="Get the current chatbot")
+async def get_bot(interaction):
+    """
+    Command to get the current chatbot.
+    """
+    bot_name = get_bot()
+    message = f"The current chatbot is: `{bot_name}`"
+    logger.info(message)
+    await interaction.response.send_message(message)
 
-@tree.command(name="get-model", description="Get the current Hugging Face model")
+@tree.command(name="change-bot", description="Change the current bot")
+async def change_bot(interaction, bot_name: str):
+    success = change_bot(bot_name)
+
+    if success:
+        message = f"Bot has been changed to: `{bot_name}`"
+        logger.info(message)
+        await interaction.response.send_message(message)
+    else:
+        message = f"Bot `{bot_name}` is invalid, available bot: `poe`, `hugging-face`"
+        logger.info(message)
+        await interaction.response.send_message(message)
+
+
+@tree.command(name="get-model", description="Get the current chatbot model")
 async def get_model(interaction):
     """
-    Command to get the current Hugging Face model.
+    Command to get the current chatbot model.
     """
-    model = chatbot.get_model()
-    message = f"The current Hugging Face model is: `{model}`"
+    model_name = chatbot.get_model()
+    message = f"The current chatbot model is: `{model_name}`"
     logger.info(message)
     await interaction.response.send_message(message)
 
 
-@tree.command(name="change-model", description="Change Hugging Face model")
+@tree.command(name="change-model", description="Change the chatbot model")
 async def change_model(interaction, model_name: str):
     """
-    Command to change the Hugging Face model.
+    Command to change the chatbot model.
     """
     success = chatbot.change_model(model_name)
     if success:
@@ -44,7 +69,10 @@ async def change_model(interaction, model_name: str):
         logger.info(message)
         await interaction.response.send_message(message)
     else:
-        message = f"Model `{model_name}` is invalid, please visit https://huggingface.co/models?pipeline_tag=conversational to get a list of available models."
+        if isinstance(chatbot, PoeChatBot):
+            message = f"Model `{model_name}` is invalid, available models: {chatbot.get_available_models()}"
+        elif isinstance(chatbot, HuggingFaceChatBot):
+            message = f"Model `{model_name}` is invalid, please visit https://huggingface.co/models?pipeline_tag=conversational to get a list of available models."
         logger.warning(message)
         await interaction.response.send_message(message)
 
@@ -86,7 +114,7 @@ async def reset_token(interaction):
     """
     Command to reset the Hugging Face API token to the default one.
     """
-    success = chatbot.change_token(config.HUGGING_FACE_API_TOKEN)
+    success = chatbot.change_token(config.HUGGING_FACE_TOKEN)
     if success:
         message = "API token has been reset to the default one"
         logger.info(message)
@@ -136,27 +164,74 @@ async def on_message(message):
         # Get response from chatbot
         user_input = message.content
         logger.info(f"Input: {user_input}")
+
         async with message.channel.typing():
             try:
-                success, bot_response = await chatbot.query(user_input, debug=config.DEBUG)
+                success, response = await chatbot.query(user_input, debug=config.DEBUG)
             except Exception as e:
-                logger.error(f"Error: {e}")
-                await message.channel.send(content="Sorry, an error occurred while processing your request.\n`{e}`")
+                logger.error(f"Query error: {e}")
+                await message.channel.send(content=f"Sorry, your request couldn't be sent.\n`{e}`")
                 return
+
+        # Empty response
+        if len(response) == 0:
+            logger.error(f"Empty response!")
+            await message.channel.send(content=f"Sorry, something wrong with the response.")
+            return
 
         # Send response to the same channel
         if success:
-            logger.info(f"Response: {bot_response}")
-            await message.channel.send(content=str(bot_response))
+            logger.info(f"Response: {response}")
+            await message.channel.send(content=str(response))
         else:
-            logger.error(f"Error response: {bot_response}")
-            error_message = f"Sorry, your request couldn't be processed.\n`{str(bot_response)}`"
+            logger.error(f"Response error: {response}")
+            error_message = f"Sorry, your request couldn't be processed.\n`{str(response)}`"
             await message.channel.send(content=error_message)
+
     except Exception as e:
-         logger.error(f"on_message Error: {e}")
-         await message.channel.send(content=f"Sorry, fail to process your request.\n`{e}`")
+        logger.error(f"on_message Error: {e}")
+        await message.channel.send(content=f"Sorry, fail to process your request.\n`{e}`")
+
+
+def get_bot():
+    if isinstance(chatbot, PoeChatBot):
+        return 'poe'
+    elif isinstance(chatbot, HuggingFaceChatBot):
+        return 'hugging-face'
+    else:
+        return None
+
+
+def change_bot(bot_name: str):
+    global chatbot
+
+    if bot_name == 'poe':
+        chatbot = PoeChatBot(
+            config.POE_TOKEN, config.POE_MODEL, config.POE_PROXY)
+    elif bot_name == 'hugging-face':
+        chatbot = HuggingFaceChatBot(
+            config.HUGGING_FACE_TOKEN, config.HUGGING_FACE_MODEL)
+    else:
+        return False
+
+    return True
+
 
 def main():
+    global chatbot
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--bot', type=str, choices=[
+                        'poe', 'huggingface'], default='huggingface', help='Select the chatbot to use')
+    args = parser.parse_args()
+
+    if args.bot == 'poe':
+        chatbot = PoeChatBot(
+            config.POE_TOKEN, config.POE_MODEL, config.POE_PROXY)
+    else:
+        chatbot = HuggingFaceChatBot(
+            config.HUGGING_FACE_TOKEN, config.HUGGING_FACE_MODEL)
+
     client.run(config.DISCORD_TOKEN)
 
 

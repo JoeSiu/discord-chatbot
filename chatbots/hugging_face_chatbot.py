@@ -1,42 +1,43 @@
+from chatbots.chatbot import ChatBot
 import asyncio
 import json
 import requests
 
 
-class ChatBot:
+class HuggingFaceChatBot(ChatBot):
     """
     A class that represents a chatbot that uses a Hugging Face model for generating responses.
     """
 
-    def __init__(self, model, api_token):
+    def __init__(self, token, model):
         """
         Initializes a new ChatBot instance.
 
         Args:
             model (str): The name of the Hugging Face model to use.
-            api_token (str): The API token to use for accessing the Hugging Face API.
+            token (str): The API token to use for accessing the Hugging Face API.
 
         Raises:
-            ValueError: If `model` or `api_token` are empty strings.
+            ValueError: If `model` or `token` are empty strings.
         """
+        if not token:
+            raise ValueError("token cannot be an empty string")
         if not model:
             raise ValueError("model cannot be an empty string")
-        if not api_token:
-            raise ValueError("api_token cannot be an empty string")
 
         self.model = model
         self.api_base_url = "https://api-inference.huggingface.co/models"
         self.api_url = f"{self.api_base_url}/{model}"
-        self.headers = {"Authorization": f"Bearer {api_token}"}
+        self.headers = {"Authorization": f"Bearer {token}"}
         self.past_user_inputs = []
         self.generated_responses = []
 
-    async def query(self, input_text, debug=False):
+    async def query(self, input: str, debug=False):
         """
         Queries the Hugging Face model with the given input text and returns the generated response.
 
         Args:
-            input_text (str): The user's input text.
+            input (str): The user's input text.
             debug (bool): Whether to include debugging information in the response.
 
         Returns:
@@ -46,16 +47,16 @@ class ChatBot:
               If `success` is False, this will contain an error message instead.
 
         Raises:
-            ValueError: If `input_text` is an empty string.
+            ValueError: If `input` is an empty string.
         """
-        if not input_text:
-            raise ValueError("input_text cannot be an empty string")
+        if not input:
+            raise ValueError("input cannot be an empty string")
 
         data = {
             "inputs": {
                 "past_user_inputs": self.past_user_inputs,
                 "generated_responses": self.generated_responses,
-                "text": input_text.strip(),
+                "text": input.strip(),
             },
             "options": {
                 "wait_for_model": True
@@ -74,7 +75,7 @@ class ChatBot:
         if 'generated_text' in response_json:
             success = True
             generated_text = response_json['generated_text'].strip()
-            self.past_user_inputs.append(input_text)
+            self.past_user_inputs.append(input)
             self.generated_responses.append(generated_text)
         else:
             error = response_json.get('error')

@@ -4,7 +4,7 @@ services:
     build: .
     environment:
       HUGGING_FACE_MODEL: ${HUGGING_FACE_MODEL}
-      HUGGING_FACE_API_TOKEN: ${HUGGING_FACE_API_TOKEN}
+      HUGGING_FACE_TOKEN: ${HUGGING_FACE_TOKEN}
       DISCORD_TOKEN: ${DISCORD_TOKEN}
       DEBUG: ${DEBUG}
     restart: always
