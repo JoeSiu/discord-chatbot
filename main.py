@@ -23,6 +23,7 @@ tree = app_commands.CommandTree(client)
 
 # Define command tree functions
 
+
 @tree.command(name="get-bot", description="Get the current chatbot")
 async def get_bot(interaction):
     """
@@ -33,18 +34,22 @@ async def get_bot(interaction):
     logger.info(message)
     await interaction.response.send_message(message)
 
+
 @tree.command(name="change-bot", description="Change the current bot")
 async def change_bot(interaction, bot_name: str):
+    # Defer sending message as changing bot takes time
+    await interaction.response.defer()
+
     success = change_bot(bot_name)
 
     if success:
         message = f"Bot has been changed to: `{bot_name}`"
         logger.info(message)
-        await interaction.response.send_message(message)
+        await interaction.followup.send(message)
     else:
         message = f"Bot `{bot_name}` is invalid, available bot: `poe`, `hugging-face`"
         logger.info(message)
-        await interaction.response.send_message(message)
+        await interaction.followup.send(message)
 
 
 @tree.command(name="get-model", description="Get the current chatbot model")
@@ -225,12 +230,7 @@ def main():
                         'poe', 'huggingface'], default='huggingface', help='Select the chatbot to use')
     args = parser.parse_args()
 
-    if args.bot == 'poe':
-        chatbot = PoeChatBot(
-            config.POE_TOKEN, config.POE_MODEL, config.POE_PROXY)
-    else:
-        chatbot = HuggingFaceChatBot(
-            config.HUGGING_FACE_TOKEN, config.HUGGING_FACE_MODEL)
+    change_bot(args.bot)
 
     client.run(config.DISCORD_TOKEN)
 

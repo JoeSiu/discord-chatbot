@@ -30,7 +30,7 @@ class PoeChatBot(ChatBot):
         self.token = token
         self.proxy = proxy if proxy and len(proxy.strip()) > 0 else None
         self.client = poe.Client(token=self.token, proxy=self.proxy)
-        self.model = self.__get_valid_model_key(model)
+        self.model = self.__get_model_key(model)
         
     async def query(self, input: str, debug=False):
         """
@@ -73,7 +73,7 @@ class PoeChatBot(ChatBot):
         Returns:
             True if the model was changed successfully, False if not.
         """
-        key = self.__get_valid_model_key(new_model)
+        key = self.__get_model_key(new_model)
         if key is not None:
             self.model = key
             return True
@@ -118,7 +118,7 @@ class PoeChatBot(ChatBot):
         """
         Returns the name of the model used by the chatbot.
         """
-        return self.model
+        return self.__get_model_value(self.model)
 
     def get_available_models(self):
         return self.client.bot_names.items()
@@ -152,7 +152,7 @@ class PoeChatBot(ChatBot):
         # Create a new Poe client with the updated token and proxy
         self.client = poe.Client(token=token, proxy=proxy)
 
-    def __get_valid_model_key(self, model_name):
+    def __get_model_key(self, model_name):
         """
         Returns the key of the model used by the chatbot based on the given model name.
 
@@ -168,5 +168,24 @@ class PoeChatBot(ChatBot):
             # If the value matches the given model_name, return the corresponding key
             if value == model_name:
                 return key
+        # If no key matches the given model_name, return None
+        return None
+
+    def __get_model_value(self, model_name):
+        """
+        Returns the value of the model used by the chatbot based on the given model name.
+
+        Args:
+            model_name (str): The name of the model to check.
+
+        Returns:
+            str or None: The key of the model if it exists, or None if it doesn't.
+
+        """
+        # Loop through the items in bot_names
+        for key, value in self.get_available_models():
+            # If the value matches the given model_name, return the corresponding key
+            if key == model_name:
+                return value
         # If no key matches the given model_name, return None
         return None
