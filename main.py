@@ -166,9 +166,14 @@ async def on_message(message):
         # Ignore messages sent by the bot itself
         if message.author == client.user:
             return
+        
+        user_input = message.content
+        
+        # Ignore messages that start with '$ignore'
+        if user_input.startswith('$ignore'):
+            return
 
         # Get response from chatbot
-        user_input = message.content
         logger.info(f"Input: {user_input}")
 
         async with message.channel.typing():
