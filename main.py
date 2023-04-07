@@ -75,7 +75,8 @@ async def change_model(interaction, model_name: str):
         await interaction.response.send_message(message)
     else:
         if isinstance(chatbot, PoeChatBot):
-            message = f"Model `{model_name}` is invalid, available models: {chatbot.get_available_models()}"
+            available_models = ", ".join([f"`{value}`" for key, value in chatbot.get_available_models()])
+            message = f"Model `{model_name}` is invalid, available models: {available_models}"
         elif isinstance(chatbot, HuggingFaceChatBot):
             message = f"Model `{model_name}` is invalid, please visit https://huggingface.co/models?pipeline_tag=conversational to get a list of available models."
         logger.warning(message)
