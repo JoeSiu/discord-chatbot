@@ -59,7 +59,7 @@ class PoeChatBot(ChatBot):
                 generated_text += chunk["text_new"]
         except Exception as e:
             success = False
-            generated_text = f"{generated_text}...\n\n`{str(e)}`"
+            generated_text = f"{generated_text}... (`{str(e)}`)"
             
         return success, generated_text
 
