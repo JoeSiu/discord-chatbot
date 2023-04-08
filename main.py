@@ -139,7 +139,7 @@ async def change_model(interaction, model_name: str):
                 message = f"Model `{model_name}` is invalid, available models: {available_models}"
             elif isinstance(chatbot, HuggingFaceChatBot):
                 message = f"Model `{model_name}` is invalid, please visit https://huggingface.co/models?pipeline_tag=conversational to get a list of available models."
-            logger.warning(message)
+            logger.info(message)
             await interaction.response.send_message(message)
     except Exception as e:
         logger.info("change_model error:  {type(e).__name__} - {e}")
@@ -230,17 +230,25 @@ async def enable_channel_monitoring(interaction):
 
     if current_channel_monitor_mode == ChannelMonitorMode.NONE:
         if interaction.channel_id in channel_whitelist:
-            await interaction.response.send_message(content="This channel is already being monitored.")
+            message = "This channel is already being monitored"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
         else:
             channel_whitelist.append(interaction.channel_id)
-            await interaction.response.send_message(content="This channel has been added to the monitoring whitelist.")
+            message = "This channel has been added to the monitoring whitelist"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
 
     elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
         if interaction.channel_id in channel_blacklist:
             channel_blacklist.remove(interaction.channel_id)
-            await interaction.response.send_message(content="This channel has been removed from the monitoring blacklist.")
+            message = "This channel has been removed from the monitoring blacklist"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
         else:
-            await interaction.response.send_message(content="This channel is already being monitored.")
+            message = "This channel is already being monitored"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
 
 
 @tree.command(name="disable-channel-monitoring", description="Disable monitoring of the current channel")
@@ -253,16 +261,24 @@ async def disable_channel_monitoring(interaction):
     if current_channel_monitor_mode == ChannelMonitorMode.NONE:
         if interaction.channel_id in channel_whitelist:
             channel_whitelist.remove(interaction.channel_id)
-            await interaction.response.send_message(content="This channel has been removed from the monitoring whitelist.")
+            message = "This channel has been removed from the monitoring whitelist"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
         else:
-            await interaction.response.send_message(content="This channel is already not being monitored.")
+            message = "This channel is already not being monitored"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
 
     elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
         if interaction.channel_id in channel_blacklist:
-            await interaction.response.send_message(content="This channel is already not being monitored.")
+            message = "This channel is already not being monitored"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
         else:
             channel_blacklist.append(interaction.channel_id)
-            await interaction.response.send_message(content="This channel has been added to the monitoring blacklist.")
+            message = "This channel has been added to the monitoring blacklist"
+            logger.info(message)
+            await interaction.response.send_message(content=message)
 
 
 @tree.command(name="get-channel-whitelist", description="Get the channel whitelist")
@@ -273,11 +289,15 @@ async def get_channel_whitelist(interaction):
     global channel_whitelist
 
     if len(channel_whitelist) == 0:
-        await interaction.response.send_message(content="There are no whitelisted channels.")
+        message = "There are no whitelisted channels"
+        logger.info(message)
+        await interaction.response.send_message(content=message)
     else:
         channel_list = ", ".join(
             [f"`{channel.name} ({channel.id})`" for channel in channel_whitelist])
-        await interaction.response.send_message(content=f"The whitelisted channels are: {channel_list}.")
+        message = f"The whitelisted channels are: {channel_list}"
+        logger.info(message)
+        await interaction.response.send_message(content=message)
 
 
 @tree.command(name="get-channel-blacklist", description="Get the channel blacklist")
@@ -288,11 +308,15 @@ async def get_channel_blacklist(interaction):
     global channel_blacklist
 
     if len(channel_blacklist) == 0:
-        await interaction.response.send_message(content="There are no blacklisted channels.")
+        message = "There are no blacklisted channels"
+        logger.info(message)
+        await interaction.response.send_message(content=message)
     else:
         channel_list = ", ".join(
             [f"`{channel.name} ({channel.id})`" for channel in channel_blacklist])
-        await interaction.response.send_message(content=f"The blacklisted channels are: {channel_list}.")
+        message = f"The blacklisted channels are: {channel_list}"
+        logger.info(message)
+        await interaction.response.send_message(content=message)
 
 
 @tree.command(name="get-channel-monitor-mode", description="Get the current monitoring mode")
@@ -301,7 +325,10 @@ async def get_channel_monitor_mode(interaction):
     Command to get the current channel monitoring mode.
     """
     global current_channel_monitor_mode
-    await interaction.response.send_message(content=f"The current monitoring mode is `{current_channel_monitor_mode.value}`.")
+
+    message = f"The current monitoring mode is `{current_channel_monitor_mode.value}`"
+    logger.info(message)
+    await interaction.response.send_message(content=message)
 
 
 @tree.command(name="change-channel-monitor-mode", description="Change the current monitoring mode")
@@ -312,11 +339,15 @@ async def change_channel_monitor_mode(interaction, new_mode: str):
     global current_channel_monitor_mode
     if new_mode.lower() not in [mode.value.lower() for mode in ChannelMonitorMode]:
         modes = ", ".join([f"`{mode.value}`" for mode in ChannelMonitorMode])
-        await interaction.response.send_message(content=f"Invalid mode. Available modes are: {modes}")
+        message = f"Invalid mode. Available modes are: {modes}"
+        logger.info(message)
+        await interaction.response.send_message(content=message)
         return
 
     current_channel_monitor_mode = ChannelMonitorMode[new_mode.upper()]
-    await interaction.response.send_message(content=f"The monitoring mode has been changed to `{current_channel_monitor_mode.value}`.")
+    message = f"The monitoring mode has been changed to `{current_channel_monitor_mode.value}`"
+    logger.info(message)
+    await interaction.response.send_message(content=message)
 
 
 @client.event
