@@ -546,7 +546,7 @@ async def query(message: str):
         status = QueryStatus.UNKNOWN_RESPONSE_ERROR
 
         logger.error(f"Response error: {response}")
-        error_message = f"Sorry, your request couldn't be processed.\n\n`{str(response)}`"
+        error_message = f"{response}`"
         return status, error_message
 
 
