@@ -90,7 +90,7 @@ async def change_bot(interaction, bot_name: str):
         # Defer sending message as changing bot takes time
         await interaction.response.defer()
 
-        success = change_bot_str(bot_name)
+        success = change_bot(bot_name)
 
         if success:
             message = f"Bot has been changed to: `{bot_name}`"
@@ -336,18 +336,17 @@ async def change_channel_monitor_mode(interaction, new_mode: str):
     """
     Command to change the current channel monitoring mode.
     """
-    global current_channel_monitor_mode
-    if new_mode.lower() not in [mode.value.lower() for mode in ChannelMonitorMode]:
+    success = change_channel_monitor_mode(new_mode)
+
+    if success:
+        message = f"The monitoring mode has been changed to `{current_channel_monitor_mode.value}`"
+        logger.info(message)
+        await interaction.response.send_message(content=message)
+    else:
         modes = ", ".join([f"`{mode.value}`" for mode in ChannelMonitorMode])
         message = f"Invalid mode. Available modes are: {modes}"
         logger.info(message)
         await interaction.response.send_message(content=message)
-        return
-
-    current_channel_monitor_mode = ChannelMonitorMode[new_mode.upper()]
-    message = f"The monitoring mode has been changed to `{current_channel_monitor_mode.value}`"
-    logger.info(message)
-    await interaction.response.send_message(content=message)
 
 
 @client.event
@@ -436,47 +435,69 @@ def get_bot():
         return None
 
 
-def change_bot(bot_type: BotType):
+def change_bot(new_bot):
     """
     Set the chatbot to the given bot_type if the bot_type is valid
     """
     global chatbot, current_bot
 
-    if bot_type not in BotType:
+    if isinstance(new_bot, str):
+        try:
+            new_bot = BotType(new_bot.lower())
+        except ValueError:
+            logger.warning(f"Invalid bot type: {new_bot}")
+            return False
+
+    if not isinstance(new_bot, BotType):
+        logger.warning(f"Invalid bot type: {type(new_bot)}")
         return False
 
-    if bot_type == BotType.POE:
+    if new_bot == BotType.POE:
         chatbot = PoeChatBot(
             config.POE_TOKEN, config.POE_MODEL, config.POE_PROXY)
 
-    elif bot_type == BotType.HUGGING_FACE:
+    elif new_bot == BotType.HUGGING_FACE:
         chatbot = HuggingFaceChatBot(
             config.HUGGING_FACE_TOKEN, config.HUGGING_FACE_MODEL)
 
-    current_bot = bot_type
+    current_bot = new_bot
     return True
 
 
-def change_bot_str(bot_name: str):
-    """
-    Convert bot_name string to BotType enum and call change_bot function.
-    """
-    try:
-        bot_type = BotType(bot_name.lower())
-    except ValueError:
+def change_channel_monitor_mode(new_mode):
+    global current_channel_monitor_mode
+
+    if isinstance(new_mode, str):
+        try:
+            new_mode = ChannelMonitorMode(new_mode.lower())
+        except ValueError:
+            logger.warning(f"Invalid channel monitor mode: {new_mode}")
+            return False
+
+    if not isinstance(new_mode, ChannelMonitorMode):
+        logger.warning(f"Invalid channel monitor mode type: {type(new_mode)}")
         return False
-    return change_bot(bot_type)
+
+    current_channel_monitor_mode = new_mode
 
 
 def main():
-    global chatbot
+    global chatbot, current_monitor_mode
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--bot', type=str, choices=[
-                        'poe', 'hugging-face'], default='poe', help='Select the chatbot to use')
+    parser.add_argument('--bot', type=str, choices=[bot.value for bot in BotType],
+                        default=BotType.POE.value, help='Select the chatbot to use')
+    parser.add_argument('--channel-monitor-mode', type=str, choices=[
+                        mode.value for mode in ChannelMonitorMode], default=ChannelMonitorMode.ALL.value, help='Select the channel monitor mode')
+    parser.add_argument('--model', type=str, default=None, help='Select the chatbot model to use')
+
     args = parser.parse_args()
 
-    change_bot_str(args.bot)
+    change_bot(args.bot)
+    change_channel_monitor_mode(args.channel_monitor_mode)
+    
+    if args.model:
+        chatbot.change_model(args.model)
 
     client.run(config.DISCORD_TOKEN, log_handler=None)
 
