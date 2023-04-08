@@ -78,9 +78,30 @@ async def send(interaction, message: str):
     """
     Command to send a message to the current chatbot.
     """
+    MAX_CHARS_PER_EMBED = 4096
+    MAX_EMBEDS_PER_MESSAGE = 10
+
     try:
         # Defer sending message as query takes time
         await interaction.response.defer()
+
+        preview = message
+        # Split message into multiple embeds if necessary
+        if len(preview) <= MAX_CHARS_PER_EMBED:
+            embed = discord.Embed(description=preview)
+            await interaction.followup.send(embed=embed)
+        else:
+            embeds = []
+            while preview:
+                chunk = preview[:MAX_CHARS_PER_EMBED]
+                preview = preview[MAX_CHARS_PER_EMBED:]
+                embed = discord.Embed(description=chunk)
+                embeds.append(embed)
+            # Send a list of embeds as separate messages, respecting Discord's character and embed limits.
+            for i in range(0, len(embeds), MAX_EMBEDS_PER_MESSAGE):
+                # Send up to MAX_EMBEDS_PER_MESSAGE embeds in a single message
+                message_embeds = embeds[i:i + MAX_EMBEDS_PER_MESSAGE]
+                await interaction.followup.send(embeds=message_embeds)
 
         async with interaction.channel.typing():
             status, response = await query(message)
@@ -101,7 +122,7 @@ async def send(interaction, message: str):
                 await interaction.followup.send(content=f"Sorry, your request couldn't be processed.\n\n`{str(response)}`")
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
+        await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-bot", description="Get the current chatbot")
@@ -142,7 +163,7 @@ async def change_bot(interaction, bot_name: str):
             await interaction.followup.send(message)
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
+        await interaction.followup.send(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-model", description="Get the current chatbot model")
