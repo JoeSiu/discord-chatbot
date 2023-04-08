@@ -294,7 +294,7 @@ async def get_channel_whitelist(interaction):
         await interaction.response.send_message(content=message)
     else:
         channel_list = ", ".join(
-            [f"`{channel.name} ({channel.id})`" for channel in channel_whitelist])
+            [f"`{client.get_channel(channel)} ({channel})`" for channel in channel_whitelist])
         message = f"The whitelisted channels are: {channel_list}"
         logger.info(message)
         await interaction.response.send_message(content=message)
@@ -313,7 +313,7 @@ async def get_channel_blacklist(interaction):
         await interaction.response.send_message(content=message)
     else:
         channel_list = ", ".join(
-            [f"`{channel.name} ({channel.id})`" for channel in channel_blacklist])
+            [f"`{client.get_channel(channel)} ({channel})`" for channel in channel_blacklist])
         message = f"The blacklisted channels are: {channel_list}"
         logger.info(message)
         await interaction.response.send_message(content=message)
