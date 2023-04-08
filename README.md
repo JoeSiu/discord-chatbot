@@ -36,7 +36,7 @@ To run the Discord ChatBot, follow these steps:
 
 ##### Available command arguments
 
-run `python main.py --bot`
+You can also use the following command arguments:
 
 | Arugments                | Description                      |
 | ------------------------ | -------------------------------- |
@@ -61,3 +61,6 @@ Make sure you have python and docker installed
 ### Discord commands
 
 Update later.
+
+---
+<sub>First time making a discord bot please expect many bugs 🙃</sub>
