@@ -58,9 +58,28 @@ Make sure you have python and docker installed
 
 ## Usage
 
+Only tested on a single server and direct messages.
+
 ### Discord commands
 
-Update later.
+| Command                        | Description |
+| ------------------------------ | ----------- |
+| `/send`                        |             |
+| `/clear-context`               |             |
+| `/get-bot`                     |             |
+| `/change-bot`                  |             |
+| `/get-model`                   |             |
+| `/change-model`                |             |
+| `/reset-model`                 |             |
+| `/change-token`                |             |
+| `/reset-token`                 |             |
+| `/enable-channel-monitoring`   |             |
+| `/disable-channel-monitoring`  |             |
+| `/get-channel-whitelist`       |             |
+| `/get-channel-blacklist`       |             |
+| `/get-channel-monitor-mode`    |             |
+| `/change-channel-monitor-mode` |             |
 
 ---
-<sub>First time making a discord bot please expect many bugs 🙃</sub>
+
+<sub>First time making a discord bot so please expect many bugs 🙃</sub>
