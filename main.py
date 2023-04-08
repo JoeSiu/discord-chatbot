@@ -1,3 +1,9 @@
+import logging
+
+# Setup logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 import argparse
 import discord
 from discord import app_commands
