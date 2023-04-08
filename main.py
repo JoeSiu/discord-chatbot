@@ -54,6 +54,14 @@ class ChannelMonitorMode(Enum):
     ALL = "all"
 
 
+class QueryStatus(Enum):
+    SUCCESS = 0
+    QUERY_ATTRIBUTE_ERROR = 2
+    UNKNOWN_QUERY_ERROR = 1
+    EMPTY_RESPONSE_ERROR = 3
+    UNKNOWN_RESPONSE_ERROR = 4
+
+
 # Initialize channel whitelist and blacklist
 channel_whitelist = []
 channel_blacklist = []
@@ -63,6 +71,37 @@ current_bot = BotType.POE
 
 # Current monitor mode
 current_channel_monitor_mode = ChannelMonitorMode.ALL
+
+
+@tree.command(name="send", description="Send a message to the bot")
+async def send(interaction, message: str):
+    """
+    Command to send a message to the current chatbot.
+    """
+    try:
+        # Defer sending message as query takes time
+        await interaction.response.defer()
+
+        async with interaction.channel.typing():
+            status, response = await query(message)
+
+            if status == QueryStatus.SUCCESS:
+                await interaction.followup.send(content=str(response))
+
+            elif status == QueryStatus.QUERY_ATTRIBUTE_ERROR:
+                await interaction.followup.send(content=f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n`{response}`")
+
+            elif status == QueryStatus.UNKNOWN_QUERY_ERROR:
+                await interaction.followup.send(content=f"Sorry, your request couldn't be sent\n\n`{response}`")
+
+            elif status == QueryStatus.EMPTY_RESPONSE_ERROR:
+                await interaction.followup.send(content=f"Sorry, something wrong with the response.\n\n`Response is empty`")
+
+            elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
+                await interaction.followup.send(content=f"Sorry, your request couldn't be processed.\n\n`{str(response)}`")
+    except Exception as e:
+        logger.info("change_bot error:  {type(e).__name__} - {e}")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-bot", description="Get the current chatbot")
@@ -392,33 +431,27 @@ async def on_message(message):
         logger.info(f"Input: {user_input}")
 
         async with message.channel.typing():
-            try:
-                success, response = await chatbot.query(user_input, debug=config.DEBUG)
-            except AttributeError as e:
-                logger.error(
-                    f"Query error:  {type(e).__name__} - {e}, trying to re-initialize the chatbot")
-                await message.channel.send(content=f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n`{type(e).__name__} - {e}`")
-                change_bot(current_bot)
-                return
-            except Exception as e:
-                logger.error(f"Query error:  {type(e).__name__} - {e}")
-                await message.channel.send(content=f"Sorry, your request couldn't be sent.\n\n`{type(e).__name__} - {e}`")
+            status, response = await query(user_input)
+
+            if status == QueryStatus.SUCCESS:
+                await message.channel.send(content=str(response))
                 return
 
-        # Empty response
-        if len(response) == 0:
-            logger.error(f"Response is empty!")
-            await message.channel.send(content=f"Sorry, something wrong with the response.\n\n`Response is empty`")
-            return
+            elif status == QueryStatus.QUERY_ATTRIBUTE_ERROR:
+                await message.channel.send(content=f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n`{response}`")
+                return
 
-        # Send response to the same channel
-        if success:
-            logger.info(f"Response: {response}")
-            await message.channel.send(content=str(response))
-        else:
-            logger.error(f"Response error: {response}")
-            error_message = f"Sorry, your request couldn't be processed.\n\n`{str(response)}`"
-            await message.channel.send(content=error_message)
+            elif status == QueryStatus.UNKNOWN_QUERY_ERROR:
+                await message.channel.send(content=f"Sorry, your request couldn't be sent\n\n`{response}`")
+                return
+
+            elif status == QueryStatus.EMPTY_RESPONSE_ERROR:
+                await message.channel.send(content=f"Sorry, something wrong with the response.\n\n`Response is empty`")
+                return
+
+            elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
+                await message.channel.send(content=f"Sorry, your request couldn't be processed.\n\n`{str(response)}`")
+                return
 
     except Exception as e:
         logger.error(f"on_message error:  {type(e).__name__} - {e}")
@@ -479,6 +512,42 @@ def change_channel_monitor_mode(new_mode):
         return False
 
     current_channel_monitor_mode = new_mode
+    return True
+
+
+async def query(message: str):
+    status = None
+
+    try:
+        success, response = await chatbot.query(message, debug=config.DEBUG)
+    except AttributeError as e:
+        status = QueryStatus.QUERY_ATTRIBUTE_ERROR
+        logger.error(
+            f"Query AttributeError:  {type(e).__name__} - {e}, trying to re-initialize the chatbot")
+        change_bot(current_bot)
+        return status, e
+    except Exception as e:
+        status = QueryStatus.UNKNOWN_QUERY_ERROR
+        logger.error(f"Query error:  {type(e).__name__} - {e}")
+        return status, e
+
+    # Empty response
+    if len(response) == 0:
+        status = QueryStatus.EMPTY_RESPONSE_ERROR
+        logger.error(f"Response is empty!")
+        return status, None
+
+    # Send response to the same channel
+    if success:
+        status = QueryStatus.SUCCESS
+        logger.info(f"Response: {response}")
+        return status, response
+    else:
+        status = QueryStatus.UNKNOWN_RESPONSE_ERROR
+
+        logger.error(f"Response error: {response}")
+        error_message = f"Sorry, your request couldn't be processed.\n\n`{str(response)}`"
+        return status, error_message
 
 
 def main():
@@ -489,13 +558,14 @@ def main():
                         default=BotType.POE.value, help='Select the chatbot to use')
     parser.add_argument('--channel-monitor-mode', type=str, choices=[
                         mode.value for mode in ChannelMonitorMode], default=ChannelMonitorMode.ALL.value, help='Select the channel monitor mode')
-    parser.add_argument('--model', type=str, default=None, help='Select the chatbot model to use')
+    parser.add_argument('--model', type=str, default=None,
+                        help='Select the chatbot model to use')
 
     args = parser.parse_args()
 
     change_bot(args.bot)
     change_channel_monitor_mode(args.channel_monitor_mode)
-    
+
     if args.model:
         chatbot.change_model(args.model)
 
