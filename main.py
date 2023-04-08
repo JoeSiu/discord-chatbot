@@ -119,7 +119,7 @@ async def send(interaction, message: str):
                 await interaction.followup.send(content=f"Sorry, something wrong with the response.\n\n`Response is empty`")
 
             elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
-                await interaction.followup.send(content=f"Sorry, your request couldn't be processed.\n\n`{str(response)}`")
+                await interaction.followup.send(content=f"Sorry, your request couldn't be processed.\n\n> {str(response)}")
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
         await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`")
@@ -471,7 +471,7 @@ async def on_message(message):
                 return
 
             elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
-                await message.channel.send(content=f"Sorry, your request couldn't be processed.\n\n`{str(response)}`")
+                await message.channel.send(content=f"Sorry, your request couldn't be processed.\n\n> {str(response)}")
                 return
 
     except Exception as e:
