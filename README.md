@@ -68,6 +68,7 @@ Only tested on a single server and direct messages.
 | `/clear-context`               |             |
 | `/get-bot`                     |             |
 | `/change-bot`                  |             |
+| `/reset-bot`                   |             |
 | `/get-model`                   |             |
 | `/change-model`                |             |
 | `/reset-model`                 |             |

@@ -166,6 +166,31 @@ async def change_bot(interaction, bot_name: str):
         await interaction.followup.send(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
 
 
+@tree.command(name="reset-bot", description="Reset the current bot")
+async def reset_bot(interaction):
+    """
+    Command to change the reset chatbot.
+    """
+    try:
+
+        # Defer sending message as changing bot takes time
+        await interaction.response.defer()
+
+        success = change_bot(current_bot)
+
+        if success:
+            message = f"Bot has been reseted"
+            logger.info(message)
+            await interaction.followup.send(message)
+        else:
+            message = f"Fail to reset bot, please try again"
+            logger.info(message)
+            await interaction.followup.send(message)
+    except Exception as e:
+        logger.info("reset_bot error:  {type(e).__name__} - {e}")
+        await interaction.followup.send(f"Sorry, an error occured while trying to reset bot.\n\n`{type(e).__name__} - {e}`")
+
+
 @tree.command(name="get-model", description="Get the current chatbot model")
 async def get_model(interaction):
     """
@@ -198,7 +223,8 @@ async def change_model(interaction, model_name: str):
                     [f"`{value}`" for key, value in chatbot.get_available_models()])
                 message = f"Model `{model_name}` is invalid, available models: {available_models}"
             elif isinstance(chatbot, HuggingFaceChatBot):
-                message = f"Model `{model_name}` is invalid, please visit https://huggingface.co/models?pipeline_tag=conversational to get a list of available models."
+                available_models = chatbot.get_available_models()
+                message = f"Model `{model_name}` is invalid, available models: {available_models}"
             logger.info(message)
             await interaction.response.send_message(message)
     except Exception as e:

@@ -73,3 +73,10 @@ class ChatBot(abc.ABC):
         Returns the name of the model used by the chatbot.
         """
         pass
+
+    @abc.abstractmethod
+    def get_available_models(self):
+        """
+        Returns the name of the models available by the chatbot.
+        """
+        pass

@@ -113,7 +113,7 @@ class HuggingFaceChatBot(ChatBot):
 
         Args:
             new_token (str): The new API token to use.
-            
+
         Returns:
             True if the API was changed successfully.
         """
@@ -132,3 +132,9 @@ class HuggingFaceChatBot(ChatBot):
         Returns the name of the Hugging Face model used by the chatbot.
         """
         return self.model
+
+    def get_available_models(self):
+        """
+        Returns the name of the models available by the chatbot.
+        """
+        return "please visit https://huggingface.co/models?pipeline_tag=conversational to get a list of available models."
