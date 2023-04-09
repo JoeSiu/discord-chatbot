@@ -62,6 +62,9 @@ class QueryStatus(Enum):
     UNKNOWN_RESPONSE_ERROR = 4
 
 
+# Nickname list
+nicknames = {}
+
 # Initialize channel whitelist and blacklist
 channel_whitelist = []
 channel_blacklist = []
@@ -72,9 +75,12 @@ current_bot = BotType.POE
 # Current monitor mode
 current_channel_monitor_mode = ChannelMonitorMode.ALL
 
+# Current name prefix mode
+current_name_prefix_mode = True
+
 
 @tree.command(name="send", description="Send a message to the bot")
-async def send(interaction, message: str):
+async def send(interaction, user_input: str):
     """
     Command to send a message to the current chatbot.
     """
@@ -85,7 +91,7 @@ async def send(interaction, message: str):
         # Defer sending message as query takes time
         await interaction.response.defer()
 
-        preview = message
+        preview = user_input
         # Split message into multiple embeds if necessary
         if len(preview) <= MAX_CHARS_PER_EMBED:
             embed = discord.Embed(description=preview)
@@ -104,25 +110,39 @@ async def send(interaction, message: str):
                 await interaction.followup.send(embeds=message_embeds)
 
         async with interaction.channel.typing():
-            status, response = await query(message)
+            # Add name prefix
+            if current_name_prefix_mode:
+                author_name = nicknames.get(
+                    interaction.user.name, interaction.user.name)
+                user_input = add_prefix_to_message(
+                    f"{user_input}: ", author_name)
 
+            logger.info(
+                f"Input from {interaction.user.name} (via /send): {user_input}")
+
+            status, response = await query(user_input)
+
+            message = ""
+            
             if status == QueryStatus.SUCCESS:
-                await interaction.followup.send(content=str(response))
+                message = response
 
             elif status == QueryStatus.QUERY_ATTRIBUTE_ERROR:
-                await interaction.followup.send(content=f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n`{response}`")
+               message = f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n`{response}`."
 
             elif status == QueryStatus.UNKNOWN_QUERY_ERROR:
-                await interaction.followup.send(content=f"Sorry, your request couldn't be sent\n\n`{response}`")
+                message=f"Sorry, your request couldn't be sent\n\n`{response}`."
 
             elif status == QueryStatus.EMPTY_RESPONSE_ERROR:
-                await interaction.followup.send(content=f"Sorry, something wrong with the response.\n\n`Response is empty`")
+                message=f"Sorry, something wrong with the response.\n\n`Response is empty`."
 
             elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
-                await interaction.followup.send(content=f"Sorry, your request couldn't be processed.\n\n> {str(response)}")
+               message=f"Sorry, your request couldn't be processed.\n\n> {str(response)}."
+                
+            await interaction.followup.send(content=message)
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
-        await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`")
+        await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="get-bot", description="Get the current chatbot")
@@ -132,12 +152,12 @@ async def get_bot(interaction):
     """
     try:
         bot_name = get_bot()
-        message = f"The current chatbot is: `{bot_name}`"
+        message = f"The current chatbot is: `{bot_name}`."
         logger.info(message)
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("get_bot error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to get bot.\n\n`{type(e).__name__} - {e}`")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to get bot.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="change-bot", description="Change the current bot")
@@ -153,17 +173,16 @@ async def change_bot(interaction, bot_name: str):
         success = change_bot(bot_name)
 
         if success:
-            message = f"Bot has been changed to: `{bot_name}`"
-            logger.info(message)
-            await interaction.followup.send(message)
+            message = f"Bot has been changed to: `{bot_name}`."
         else:
             bots = ", ".join([bot.value for bot in BotType])
-            message = f"Bot `{bot_name}` is invalid, available bot: {bots}"
-            logger.info(message)
-            await interaction.followup.send(message)
+            message = f"Bot `{bot_name}` is invalid, available bot: {bots}."
+            
+        logger.info(message)
+        await interaction.followup.send(message)
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
-        await interaction.followup.send(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
+        await interaction.followup.send(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="reset-bot", description="Reset the current bot")
@@ -179,16 +198,15 @@ async def reset_bot(interaction):
         success = change_bot(current_bot)
 
         if success:
-            message = f"Bot has been reseted"
-            logger.info(message)
-            await interaction.followup.send(message)
+            message = f"Bot has been reset."
         else:
-            message = f"Fail to reset bot, please try again"
-            logger.info(message)
-            await interaction.followup.send(message)
+            message = f"Fail to reset bot, please try again."
+            
+        logger.info(message)
+        await interaction.followup.send(message)
     except Exception as e:
         logger.info("reset_bot error:  {type(e).__name__} - {e}")
-        await interaction.followup.send(f"Sorry, an error occured while trying to reset bot.\n\n`{type(e).__name__} - {e}`")
+        await interaction.followup.send(f"Sorry, an error occured while trying to reset bot.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="get-model", description="Get the current chatbot model")
@@ -198,12 +216,12 @@ async def get_model(interaction):
     """
     try:
         model_name = chatbot.get_model()
-        message = f"The current chatbot model is: `{model_name}`"
+        message = f"The current chatbot model is: `{model_name}`."
         logger.info(message)
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("get_model error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to get model.\n\n`{type(e).__name__} - {e}`")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to get model.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="change-model", description="Change the chatbot model")
@@ -214,42 +232,50 @@ async def change_model(interaction, model_name: str):
     try:
         success = chatbot.change_model(model_name)
         if success:
-            message = f"Model has been changed to: `{model_name}`"
-            logger.info(message)
-            await interaction.response.send_message(message)
+            message = f"Model has been changed to: `{model_name}`."        
         else:
-            if isinstance(chatbot, PoeChatBot):
+            if current_bot == BotType.POE:
                 available_models = ", ".join(
                     [f"`{value}`" for key, value in chatbot.get_available_models()])
-                message = f"Model `{model_name}` is invalid, available models: {available_models}"
-            elif isinstance(chatbot, HuggingFaceChatBot):
+                message = f"Model `{model_name}` is invalid, available models: {available_models}."
+                
+            elif current_bot == BotType.HUGGING_FACE:
                 available_models = chatbot.get_available_models()
-                message = f"Model `{model_name}` is invalid, available models: {available_models}"
-            logger.info(message)
-            await interaction.response.send_message(message)
+                message = f"Model `{model_name}` is invalid, available models: {available_models}."
+                
+        logger.info(message)
+        await interaction.response.send_message(message)
     except Exception as e:
         logger.info("change_model error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to change model.\n\n`{type(e).__name__} - {e}`")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to change model.\n\n`{type(e).__name__} - {e}`.")
 
 
-@tree.command(name="reset-model", description="Reset the current Hugging Face model to the default one")
+@tree.command(name="reset-model", description="Reset the current model to the default one")
 async def reset_model(interaction):
     """
-    Command to reset the Hugging Face model to the default one.
+    Command to reset the model to the default one.
     """
     try:
-        success = chatbot.change_model(config.HUGGING_FACE_MODEL)
+        default_model = None
+        
+        if current_bot == BotType.POE:
+            default_model = config.POE_MODEL
+
+        elif current_bot == BotType.HUGGING_FACE:
+            default_model = config.HUGGING_FACE_MODEL
+                
+        success = chatbot.change_model(default_model)
         if success:
-            message = f"Model has been reset to the default one: `{config.HUGGING_FACE_MODEL}`"
+            message = f"Model has been reset to the default one: `{default_model}`."
             logger.info(message)
-            await interaction.response.send_message(message)
         else:
-            message = f"Failed to reset the model to the default one: `{config.HUGGING_FACE_MODEL}`"
-            logger.error(message)
-            await interaction.response.send_message(message)
+            message = f"Failed to reset the model to the default one: `{default_model}`."
+            logger.warning(message)
+            
+        await interaction.response.send_message(message)
     except Exception as e:
         logger.info("reset_model error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to reset model.\n\n`{type(e).__name__} - {e}`")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to reset model.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="change-token", description="Change Hugging Face API token")
@@ -260,16 +286,16 @@ async def change_token(interaction, token: str):
     try:
         success = chatbot.change_token(token)
         if success:
-            message = "API token has been changed"
+            message = "API token has been changed."
             logger.info(message)
-            await interaction.response.send_message(message)
         else:
-            message = "Failed to change API token"
-            logger.error(message)
-            await interaction.response.send_message(message)
+            message = "Failed to change API token."
+            logger.warning(message)
+            
+        await interaction.response.send_message(message)
     except Exception as e:
         logger.info("change_token error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to change token.\n\n`{type(e).__name__} - {e}`")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to change token.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="reset-token", description="Reset the Hugging Face API token to the default one")
@@ -280,16 +306,16 @@ async def reset_token(interaction):
     try:
         success = chatbot.change_token(config.HUGGING_FACE_TOKEN)
         if success:
-            message = "API token has been reset to the default one"
+            message = "API token has been reset to the default one."
             logger.info(message)
-            await interaction.response.send_message(message)
         else:
-            message = "Failed to reset API token to the default one"
-            logger.error(message)
-            await interaction.response.send_message(message)
+            message = "Failed to reset API token to the default one."      
+            logger.warning(message)
+            
+        await interaction.response.send_message(message)
     except Exception as e:
         logger.info("reset_token error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to reset token.\n\n`{type(e).__name__} - {e}`")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to reset token.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="clear-context", description="Clear context")
@@ -299,12 +325,12 @@ async def clear_context(interaction):
     """
     try:
         chatbot.clear_context()
-        message = "Context has been cleared"
+        message = "Context has been cleared."
         logger.info(message)
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("clear_context error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to clear context.\n\n`{type(e).__name__} - {e}`")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to clear context.\n\n`{type(e).__name__} - {e}`.")
 
 
 @tree.command(name="enable-channel-monitoring", description="Enable monitoring of the current channel")
@@ -316,25 +342,20 @@ async def enable_channel_monitoring(interaction):
 
     if current_channel_monitor_mode == ChannelMonitorMode.NONE:
         if interaction.channel_id in channel_whitelist:
-            message = "This channel is already being monitored"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel is already being monitored."
         else:
             channel_whitelist.append(interaction.channel_id)
-            message = "This channel has been added to the monitoring whitelist"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel has been added to the monitoring whitelist."
 
     elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
         if interaction.channel_id in channel_blacklist:
             channel_blacklist.remove(interaction.channel_id)
-            message = "This channel has been removed from the monitoring blacklist"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel has been removed from the monitoring blacklist."
         else:
-            message = "This channel is already being monitored"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel is already being monitored."
+            
+    logger.info(message)
+    await interaction.response.send_message(content=message)
 
 
 @tree.command(name="disable-channel-monitoring", description="Disable monitoring of the current channel")
@@ -347,24 +368,19 @@ async def disable_channel_monitoring(interaction):
     if current_channel_monitor_mode == ChannelMonitorMode.NONE:
         if interaction.channel_id in channel_whitelist:
             channel_whitelist.remove(interaction.channel_id)
-            message = "This channel has been removed from the monitoring whitelist"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel has been removed from the monitoring whitelist."
         else:
-            message = "This channel is already not being monitored"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel is already not being monitored."
 
     elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
         if interaction.channel_id in channel_blacklist:
-            message = "This channel is already not being monitored"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel is already not being monitored."
         else:
             channel_blacklist.append(interaction.channel_id)
-            message = "This channel has been added to the monitoring blacklist"
-            logger.info(message)
-            await interaction.response.send_message(content=message)
+            message = "This channel has been added to the monitoring blacklist."
+            
+    logger.info(message)
+    await interaction.response.send_message(content=message)
 
 
 @tree.command(name="get-channel-whitelist", description="Get the channel whitelist")
@@ -375,15 +391,14 @@ async def get_channel_whitelist(interaction):
     global channel_whitelist
 
     if len(channel_whitelist) == 0:
-        message = "There are no whitelisted channels"
-        logger.info(message)
-        await interaction.response.send_message(content=message)
+        message = "There are no whitelisted channels."
     else:
         channel_list = ", ".join(
             [f"`{client.get_channel(channel)} ({channel})`" for channel in channel_whitelist])
-        message = f"The whitelisted channels are: {channel_list}"
-        logger.info(message)
-        await interaction.response.send_message(content=message)
+        message = f"The whitelisted channels are: {channel_list}."
+        
+    logger.info(message)
+    await interaction.response.send_message(content=message)
 
 
 @tree.command(name="get-channel-blacklist", description="Get the channel blacklist")
@@ -395,14 +410,13 @@ async def get_channel_blacklist(interaction):
 
     if len(channel_blacklist) == 0:
         message = "There are no blacklisted channels"
-        logger.info(message)
-        await interaction.response.send_message(content=message)
     else:
         channel_list = ", ".join(
             [f"`{client.get_channel(channel)} ({channel})`" for channel in channel_blacklist])
-        message = f"The blacklisted channels are: {channel_list}"
-        logger.info(message)
-        await interaction.response.send_message(content=message)
+        message = f"The blacklisted channels are: {channel_list}."
+        
+    logger.info(message)
+    await interaction.response.send_message(content=message)
 
 
 @tree.command(name="get-channel-monitor-mode", description="Get the current monitoring mode")
@@ -412,7 +426,7 @@ async def get_channel_monitor_mode(interaction):
     """
     global current_channel_monitor_mode
 
-    message = f"The current monitoring mode is `{current_channel_monitor_mode.value}`"
+    message = f"The current monitoring mode is `{current_channel_monitor_mode.value}`."
     logger.info(message)
     await interaction.response.send_message(content=message)
 
@@ -425,14 +439,90 @@ async def change_channel_monitor_mode(interaction, new_mode: str):
     success = change_channel_monitor_mode(new_mode)
 
     if success:
-        message = f"The monitoring mode has been changed to `{current_channel_monitor_mode.value}`"
-        logger.info(message)
-        await interaction.response.send_message(content=message)
+        message = f"The monitoring mode has been changed to `{current_channel_monitor_mode.value}`."
     else:
         modes = ", ".join([f"`{mode.value}`" for mode in ChannelMonitorMode])
-        message = f"Invalid mode. Available modes are: {modes}"
-        logger.info(message)
-        await interaction.response.send_message(content=message)
+        message = f"Invalid mode. Available modes are: {modes}."
+        
+    logger.info(message)
+    await interaction.response.send_message(content=message)
+
+
+@tree.command(name="enable-name-prefix", description="Enable prefixing username / nickname to chat messages")
+async def enable_name_prefix(interaction):
+    """
+    Command to enable name prefix.
+    """
+    change_name_prefix_mode(True)
+    message = f"Enabled name prefix"
+    logger.info(message)
+    await interaction.response.send_message(content=message)
+
+
+@tree.command(name="disable-name-prefix", description="Disable prefixing username / nickname to chat messages")
+async def disable_name_prefix(interaction):
+    """
+    Command to disable name prefix.
+    """
+    change_name_prefix_mode(False)
+    message = f"Disabled name prefix"
+    logger.info(message)
+    await interaction.response.send_message(content=message)
+
+
+@tree.command(name="register-nickname", description="Register / update a nickname")
+async def register_nickname(interaction, nickname: str):
+    """
+    Registers or updates a nickname for the user who sent the command.
+    """
+    author_name = interaction.user.name
+
+    # Check if nickname already exists
+    if author_name in nicknames:
+        message = f"Your nickname has been updated to `{nickname}`."
+    else:
+        message = f"Your nickname `{nickname}` has been registered."
+
+    # Update the nickname
+    nicknames[author_name] = nickname
+
+    logger.info(message)
+    await interaction.response.send_message(content=message)
+
+
+@tree.command(name="unregister-nickname", description="Unregister a nickname if registered")
+async def unregister_nickname(interaction):
+    """
+    Unregisters the nickname for the user who sent the command.
+    """
+    author_name = interaction.user.name
+
+    # Check if nickname exists
+    if author_name in nicknames:
+        del nicknames[author_name]
+        message = f"Your nickname has been unregistered."
+    else:
+        message = f"You don't have a registered nickname."
+
+    logger.info(message)
+    await interaction.response.send_message(content=message)
+
+
+@tree.command(name="get-nickname", description="Get the nickname if registered")
+async def get_nickname(interaction):
+    """
+    Returns the nickname for the user who sent the command.
+    """
+    author_name = interaction.user.name
+
+    # Check if nickname exists
+    if author_name in nicknames:
+        message = f"Your current nickname is `{nicknames[author_name]}`."
+    else:
+        message = f"You don't have a registered nickname."
+
+    logger.info(message)
+    await interaction.response.send_message(content=message)
 
 
 @client.event
@@ -474,11 +564,17 @@ async def on_message(message):
         if user_input.startswith('$ignore'):
             return
 
+        # Add name prefix
+        if current_name_prefix_mode:
+            author_name = nicknames.get(
+                message.author.name, message.author.name)
+            user_input = add_prefix_to_message(f"{author_name}: ", user_input)
+
         # Get response from chatbot
-        logger.info(f"Input: {user_input}")
+        logger.info(f"Input from {message.author}: {user_input}")
 
         async with message.channel.typing():
-            status, response = await query(user_input)
+            status, response = await query(f"@{message.author}: {user_input}")
 
             if status == QueryStatus.SUCCESS:
                 await message.channel.send(content=str(response))
@@ -502,7 +598,7 @@ async def on_message(message):
 
     except Exception as e:
         logger.error(f"on_message error:  {type(e).__name__} - {e}")
-        await message.channel.send(content=f"Sorry, fail to process your request.\n\n`{type(e).__name__} - {e}`")
+        await message.channel.send(content=f"Sorry, fail to process your request.\n\n`{type(e).__name__} - {e}`.")
 
 
 def get_bot():
@@ -562,6 +658,11 @@ def change_channel_monitor_mode(new_mode):
     return True
 
 
+def change_name_prefix_mode(new_mode):
+    global current_name_prefix_mode
+    current_name_prefix_mode = new_mode
+
+
 async def query(message: str):
     status = None
 
@@ -597,24 +698,37 @@ async def query(message: str):
         return status, error_message
 
 
+def add_prefix_to_message(prefix: str, message: str):
+    return f"{prefix}{message}"
+
+
 def main():
-    global chatbot, current_monitor_mode
+    global chatbot, current_monitor_mode, current_name_prefix_mode
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--bot', type=str, choices=[bot.value for bot in BotType],
                         default=BotType.POE.value, help='Select the chatbot to use')
-    parser.add_argument('--channel-monitor-mode', type=str, choices=[
-                        mode.value for mode in ChannelMonitorMode], default=ChannelMonitorMode.ALL.value, help='Select the channel monitor mode')
     parser.add_argument('--model', type=str, default=None,
                         help='Select the chatbot model to use')
+    parser.add_argument('--channel-monitor-mode', type=str, choices=[
+                        mode.value for mode in ChannelMonitorMode], default=ChannelMonitorMode.ALL.value, help='Select the channel monitor mode')
+    parser.add_argument('--enable-name-prefix', type=bool, choices=[
+                        True, False], default=True, help='Enable or disable prefixing user names to chat messages. Default is True.')
 
     args = parser.parse_args()
 
+    # Set default bot
     change_bot(args.bot)
-    change_channel_monitor_mode(args.channel_monitor_mode)
 
+    # Set default model
     if args.model:
         chatbot.change_model(args.model)
+
+    # Set default channel monitor mode
+    change_channel_monitor_mode(args.channel_monitor_mode)
+
+    # Set default enable name prefix
+    change_name_prefix_mode(args.enable_name_prefix)
 
     client.run(config.DISCORD_TOKEN, log_handler=None)
 
