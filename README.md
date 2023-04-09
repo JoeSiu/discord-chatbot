@@ -34,7 +34,7 @@ To run the Discord ChatBot, follow these steps:
 
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
 2. Create a bot and copy its token.
-3. Paste the token into the `DISCORD_TOKEN` field in the .env file.
+3. Paste the token into the `DISCORD_TOKEN` field in the `.env` file.
 
 #### Poe
 
