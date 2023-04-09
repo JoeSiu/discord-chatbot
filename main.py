@@ -574,7 +574,7 @@ async def on_message(message):
         logger.info(f"Input from {message.author}: {user_input}")
 
         async with message.channel.typing():
-            status, response = await query(f"@{message.author}: {user_input}")
+            status, response = await query(user_input)
 
             if status == QueryStatus.SUCCESS:
                 await message.channel.send(content=str(response))
