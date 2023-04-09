@@ -6,6 +6,8 @@ The Discord ChatBot is a Python-based chatbot that supports following:
 
 - All [Hugging Face conversational models](https://huggingface.co/models?pipeline_tag=conversational)
 
+![discord-chatbot](https://user-images.githubusercontent.com/38518793/230790942-98d55cb7-3fb3-4442-92b2-9b697ad086d0.gif)
+
 ## Installation Instructions
 
 To run the Discord ChatBot, follow these steps:
