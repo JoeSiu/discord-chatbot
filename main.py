@@ -145,7 +145,7 @@ async def send(interaction, user_input: str):
         await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`.")
 
 
-@tree.command(name="get-bot", description="Get the current chatbot")
+@tree.command(name="get-bot", description="Get the current bot")
 async def get_bot(interaction):
     """
     Command to get the current chatbot.
@@ -278,10 +278,10 @@ async def reset_model(interaction):
         await interaction.response.send_message(f"Sorry, an error occured while trying to reset model.\n\n`{type(e).__name__} - {e}`.")
 
 
-@tree.command(name="change-token", description="Change Hugging Face API token")
+@tree.command(name="change-token", description="Change the API token")
 async def change_token(interaction, token: str):
     """
-    Command to change the Hugging Face API token.
+    Command to change the API token.
     """
     try:
         success = chatbot.change_token(token)
@@ -298,10 +298,10 @@ async def change_token(interaction, token: str):
         await interaction.response.send_message(f"Sorry, an error occured while trying to change token.\n\n`{type(e).__name__} - {e}`.")
 
 
-@tree.command(name="reset-token", description="Reset the Hugging Face API token to the default one")
+@tree.command(name="reset-token", description="Reset the API token to the default one")
 async def reset_token(interaction):
     """
-    Command to reset the Hugging Face API token to the default one.
+    Command to reset the API token to the default one.
     """
     try:
         success = chatbot.change_token(config.HUGGING_FACE_TOKEN)
