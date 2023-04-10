@@ -12,11 +12,13 @@ The Discord ChatBot is a Python-based chatbot that supports following:
 
 To run the Discord ChatBot, follow these steps:
 
-### Prerequites
+### Setup
 
 1. Clone this repository using Git.
-
 2. Duplicate the `.env.template` file and rename it to `.env`. Replace each key with the corresponding values.
+3. Go to [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
+4. Create a bot and copy its token.
+5. Paste the token into the `DISCORD_TOKEN` field in the `.env` file.
 
 #### Environment Variables
 
@@ -30,15 +32,9 @@ To run the Discord ChatBot, follow these steps:
 | HUGGING_FACE_MODEL | Default Hugging Face model, refer to [Hugging Face conversational models](https://huggingface.co/models?pipeline_tag=conversational). Leave empty if you don't intend to use the Hugging Face bot.                         |
 | DEBUG              | Whether to use debug view.                                                                                                                                                                                                 |
 
-### Setup
-
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
-2. Create a bot and copy its token.
-3. Paste the token into the `DISCORD_TOKEN` field in the `.env` file.
-
 #### Poe
 
-To use the Poe bot, follow these steps:
+To use the Poe bot, follow the steps below:
 
 1. Refer to [poe-api guide](https://github.com/ading2210/poe-api#finding-your-token) to obtain your token.
 2. Update the `POE_TOKEN` field in the `.env` file.
@@ -47,19 +43,17 @@ To use the Poe bot, follow these steps:
 
 #### Hugging Face
 
-For using the Hugging Face bot, follow the steps below:
+To use the Hugging Face bot, follow the steps below:
 
 1. Obtain your Hugging Face API token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
-2. Set the `HUGGING_FACE_MODEL` field to the desired model.(Find the model from [https://huggingface.co/models?pipeline_tag=conversational](https://huggingface.co/models?pipeline_tag=conversational), then copy the model name, e.g., `facebook/blenderbot-3B`).
+2. Set the `HUGGING_FACE_MODEL` field to the desired model. (Find the model from [https://huggingface.co/models?pipeline_tag=conversational](https://huggingface.co/models?pipeline_tag=conversational), then copy the model name, e.g., `facebook/blenderbot-3B`).
 
 ### Run the program
 
 #### CLI
 
-1. Make sure you have Python installed.
-
-2. Run `pip install -r requirements.txt` to install the required dependencies., using python virtual environment is recommended.
-
+1. Make sure you have Python3 installed.
+2. Run `pip install -r requirements.txt` to install the required dependencies, using python virtual environment is recommended.
 3. Run `python main.py` to start the bot.
 
 ##### Available command arguments
@@ -77,13 +71,9 @@ You can also use the following command arguments:
 
 Make sure you have python and docker installed
 
-1. Make sure you have Python and Docker installed.
-
-2. Clone this repository using Git.
-
-3. run `docker-compose build` to build the docker image.
-
-4. run `docker-compose up -d` to start the container.
+1. Make sure you have Docker installed.
+2. run `docker-compose build` to build the docker image.
+3. run `docker-compose up -d` to start the container.
 
 ## Usage
 
@@ -120,7 +110,6 @@ Make sure you have python and docker installed
 ## Limitation
 
 - Currently, the bot has only been tested on a single server and in direct messages.
-
 - The bot is a single instance only, which means that any messages or commands sent in direct messages or different channels will be treated as if they came from the same source.
 
 ## Note
