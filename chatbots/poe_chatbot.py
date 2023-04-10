@@ -52,10 +52,12 @@ class PoeChatBot(ChatBot):
         if not input:
             raise ValueError("input cannot be an empty string")
 
+        loop = asyncio.get_running_loop()
         success = True
         generated_text = ""
         try:
-            for chunk in self.client.send_message(self.model, input, with_chat_break=False):
+            response = await loop.run_in_executor(None, self.client.send_message, self.model, input, False)
+            for chunk in response:
                 generated_text += chunk["text_new"]
         except Exception as e:
             success = False
