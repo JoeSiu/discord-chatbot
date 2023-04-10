@@ -61,11 +61,11 @@ class PoeChatBot(ChatBot):
                 generated_text += chunk["text_new"]
         except Exception as e:
             success = False
-            error_message = str(e).replace("`", "")
+            error_message = str(e)
             if len(generated_text) > 0:
                 generated_text = f"{generated_text}... (`{error_message}`)"
             else:
-                generated_text = f"`{error_message}`"
+                generated_text = f"{error_message}"
             
         return success, generated_text
 

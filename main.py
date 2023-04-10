@@ -593,7 +593,7 @@ async def on_message(message):
                 return
 
             elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
-                await message.channel.send(content=f"Sorry, your request couldn't be processed.\n\n> {str(response)}")
+                await message.channel.send(content=f"Sorry, your request couldn't be processed.\n\n> `{str(response)}`")
                 return
 
     except Exception as e:
@@ -694,7 +694,7 @@ async def query(message: str):
         status = QueryStatus.UNKNOWN_RESPONSE_ERROR
 
         logger.error(f"Response error: {response}")
-        error_message = f"{response}`"
+        error_message = f"{response}"
         return status, error_message
 
 
