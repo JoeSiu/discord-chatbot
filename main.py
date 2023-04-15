@@ -122,27 +122,12 @@ async def send(interaction, user_input: str):
 
             status, response = await query(user_input)
 
-            message = ""
-            
-            if status == QueryStatus.SUCCESS:
-                message = response
-
-            elif status == QueryStatus.QUERY_ATTRIBUTE_ERROR:
-               message = f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n`{response}`."
-
-            elif status == QueryStatus.UNKNOWN_QUERY_ERROR:
-                message=f"Sorry, your request couldn't be sent\n\n`{response}`."
-
-            elif status == QueryStatus.EMPTY_RESPONSE_ERROR:
-                message=f"Sorry, something wrong with the response.\n\n`Response is empty`."
-
-            elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
-               message=f"Sorry, your request couldn't be processed.\n\n> {str(response)}."
+            message = format_response_based_on_status(response, status)
                 
             await interaction.followup.send(content=message)
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
-        await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-bot", description="Get the current bot")
@@ -157,7 +142,7 @@ async def get_bot(interaction):
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("get_bot error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to get bot.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to get bot.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="change-bot", description="Change the current bot")
@@ -182,7 +167,7 @@ async def change_bot(interaction, bot_name: str):
         await interaction.followup.send(message)
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
-        await interaction.followup.send(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.followup.send(f"Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="reset-bot", description="Reset the current bot")
@@ -206,7 +191,7 @@ async def reset_bot(interaction):
         await interaction.followup.send(message)
     except Exception as e:
         logger.info("reset_bot error:  {type(e).__name__} - {e}")
-        await interaction.followup.send(f"Sorry, an error occured while trying to reset bot.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.followup.send(f"Sorry, an error occured while trying to reset bot.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-model", description="Get the current chatbot model")
@@ -221,7 +206,7 @@ async def get_model(interaction):
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("get_model error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to get model.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to get model.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="change-model", description="Change the chatbot model")
@@ -247,7 +232,7 @@ async def change_model(interaction, model_name: str):
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("change_model error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to change model.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to change model.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="reset-model", description="Reset the current model to the default one")
@@ -275,7 +260,7 @@ async def reset_model(interaction):
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("reset_model error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to reset model.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to reset model.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="change-token", description="Change the API token")
@@ -295,7 +280,7 @@ async def change_token(interaction, token: str):
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("change_token error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to change token.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to change token.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="reset-token", description="Reset the API token to the default one")
@@ -315,7 +300,7 @@ async def reset_token(interaction):
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("reset_token error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to reset token.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to reset token.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="clear-context", description="Clear context")
@@ -330,7 +315,7 @@ async def clear_context(interaction):
         await interaction.response.send_message(message)
     except Exception as e:
         logger.info("clear_context error:  {type(e).__name__} - {e}")
-        await interaction.response.send_message(f"Sorry, an error occured while trying to clear context.\n\n`{type(e).__name__} - {e}`.")
+        await interaction.response.send_message(f"Sorry, an error occured while trying to clear context.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="enable-channel-monitoring", description="Enable monitoring of the current channel")
@@ -575,30 +560,14 @@ async def on_message(message):
 
         async with message.channel.typing():
             status, response = await query(user_input)
+            
+            message = format_response_based_on_status(response, status)
 
-            if status == QueryStatus.SUCCESS:
-                await message.channel.send(content=str(response))
-                return
-
-            elif status == QueryStatus.QUERY_ATTRIBUTE_ERROR:
-                await message.channel.send(content=f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n`{response}`")
-                return
-
-            elif status == QueryStatus.UNKNOWN_QUERY_ERROR:
-                await message.channel.send(content=f"Sorry, your request couldn't be sent\n\n`{response}`")
-                return
-
-            elif status == QueryStatus.EMPTY_RESPONSE_ERROR:
-                await message.channel.send(content=f"Sorry, something wrong with the response.\n\n`Response is empty`")
-                return
-
-            elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
-                await message.channel.send(content=f"Sorry, your request couldn't be processed.\n\n> `{str(response)}`")
-                return
-
+            await message.channel.send(content=message)
+           
     except Exception as e:
         logger.error(f"on_message error:  {type(e).__name__} - {e}")
-        await message.channel.send(content=f"Sorry, fail to process your request.\n\n`{type(e).__name__} - {e}`.")
+        await message.channel.send(content=f"Sorry, fail to process your request.\n\n`{type(e).__name__} - {e}`")
 
 
 def get_bot():
@@ -683,7 +652,7 @@ async def query(message: str):
     if len(response) == 0:
         status = QueryStatus.EMPTY_RESPONSE_ERROR
         logger.error(f"Response is empty!")
-        return status, None
+        return status, "Response is empty"
 
     # Send response to the same channel
     if success:
@@ -701,6 +670,26 @@ async def query(message: str):
 def add_prefix_to_message(prefix: str, message: str):
     return f"{prefix}{message}"
 
+
+def format_response_based_on_status(response: str, status: QueryStatus):
+    if status == QueryStatus.SUCCESS:
+        return response
+
+    elif status == QueryStatus.QUERY_ATTRIBUTE_ERROR:
+        return f"Sorry, your request couldn't be sent, trying to re-initialize the chatbot, please retry few seconds later.\n\n> {response}"
+        
+
+    elif status == QueryStatus.UNKNOWN_QUERY_ERROR:
+        return f"Sorry, your request couldn't be sent.\n\n> {response}"
+        
+
+    elif status == QueryStatus.EMPTY_RESPONSE_ERROR:
+        return f"Sorry, something wrong with the response.\n\n> {response}"
+        
+
+    elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
+        return f"Sorry, your request couldn't be processed.\n\n> {response}"
+        
 
 def main():
     global chatbot, current_monitor_mode, current_name_prefix_mode
