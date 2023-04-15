@@ -1,8 +1,6 @@
 from chatbots.chatbot import ChatBot
 import poe
-import asyncio
-import json
-import requests
+import utils
 
 
 class PoeChatBot(ChatBot):
@@ -31,7 +29,7 @@ class PoeChatBot(ChatBot):
         self.proxy = proxy if proxy and len(proxy.strip()) > 0 else None
         self.client = poe.Client(token=self.token, proxy=self.proxy)
         self.model = self.__get_model_key(model)
-        
+
     async def query(self, input: str, debug=False):
         """
         Queries the Poe with the given input text and returns the generated response.
@@ -52,21 +50,31 @@ class PoeChatBot(ChatBot):
         if not input:
             raise ValueError("input cannot be an empty string")
 
-        loop = asyncio.get_running_loop()
         success = True
         generated_text = ""
+
         try:
-            response = await loop.run_in_executor(None, self.client.send_message, self.model, input, False)
-            for chunk in response:
+            # As client.send_message is a synconous iterator, we need to wrap it in async
+            # iterator to prevent errors like discord.gateway: shard id none heartbeat blocked for more than x seconds
+            ait = utils.async_wrap_iter(
+                self.client.send_message(self.model, input, False))
+            
+            # Combine the response chunks into a single string
+            async for chunk in ait:
                 generated_text += chunk["text_new"]
+                
         except Exception as e:
             success = False
             error_message = str(e)
+            
+            # If response timeouted while generating (e.g. response is too long)
             if len(generated_text) > 0:
                 generated_text = f"{generated_text}... (`{error_message}`)"
+            
+            # If no response received       
             else:
                 generated_text = f"{error_message}"
-            
+
         return success, generated_text
 
     def change_model(self, new_model):
@@ -99,7 +107,7 @@ class PoeChatBot(ChatBot):
         self.token = new_token
         self.__update_client()
         return True
-    
+
     def change_proxy(self, new_proxy):
         """
         Changes the proxy used by the chatbot.
@@ -128,7 +136,7 @@ class PoeChatBot(ChatBot):
 
     def get_available_models(self):
         return self.client.bot_names.items()
-    
+
     def __update_client(self, token=None, proxy=None):
         """
         Updates the Poe client with the provided token and proxy, or the default ones if None.
