@@ -122,9 +122,9 @@ async def send(interaction, user_input: str):
 
             status, response = await query(user_input)
 
-            message = format_response_based_on_status(response, status)
+            response = format_response_based_on_status(response, status)
                 
-            await interaction.followup.send(content=message)
+            await interaction.followup.send(content=response)
     except Exception as e:
         logger.info("change_bot error:  {type(e).__name__} - {e}")
         await interaction.followup.send(f"Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`")
@@ -561,9 +561,9 @@ async def on_message(message):
         async with message.channel.typing():
             status, response = await query(user_input)
             
-            message = format_response_based_on_status(response, status)
+            response = format_response_based_on_status(response, status)
 
-            await message.channel.send(content=message)
+            await message.channel.send(content=response)
            
     except Exception as e:
         logger.error(f"on_message error:  {type(e).__name__} - {e}")
