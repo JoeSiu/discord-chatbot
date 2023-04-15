@@ -1,10 +1,14 @@
 # Discord ChatBot
 
+## Description
+
 The Discord ChatBot is a Python-based chatbot that supports following:
 
 - [Poe](https://poe.com/) bots, including `Sage`, `GPT-4`, `Claude+`, `Claude-instant`, `ChatGPT`, `Dragonfly` and custom bots (via [Unoffical API](https://github.com/ading2210/poe-api))
 
 - All [Hugging Face conversational models](https://huggingface.co/models?pipeline_tag=conversational)
+
+## Demo
 
 ![discord-chatbot](https://user-images.githubusercontent.com/38518793/230790942-98d55cb7-3fb3-4442-92b2-9b697ad086d0.gif)
 
