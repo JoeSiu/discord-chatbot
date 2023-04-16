@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import logging.handlers
 import sys
@@ -68,7 +69,7 @@ current_name_prefix_mode = True  # Current name prefix mode
 
 
 @tree.command(name="send", description="Send a message to the bot")
-async def send(interaction, user_input: str):
+async def handle_send_command(interaction, user_input: str, delay: float = 0.0):
     """
     Command to send a message to the current chatbot.
     """
@@ -78,6 +79,11 @@ async def send(interaction, user_input: str):
     try:
         # Defer sending message as query takes time
         await interaction.response.defer()
+
+        if (delay > 0.0):
+            logger.info(
+                f"Recieved /send command with {delay} seconds delay...")
+            await asyncio.sleep(delay)
 
         preview = user_input
         # Split message into multiple embeds if necessary
@@ -119,7 +125,7 @@ async def send(interaction, user_input: str):
 
 
 @tree.command(name="get-bot", description="Get the current bot")
-async def get_bot(interaction):
+async def handle_get_bot_command(interaction):
     """
     Command to get the current chatbot.
     """
@@ -134,7 +140,7 @@ async def get_bot(interaction):
 
 
 @tree.command(name="change-bot", description="Change the current bot")
-async def change_bot(interaction, bot_name: str):
+async def handle_change_bot_command(interaction, bot_name: str):
     """
     Command to change the current chatbot.
     """
@@ -159,7 +165,7 @@ async def change_bot(interaction, bot_name: str):
 
 
 @tree.command(name="reset-bot", description="Reset the current bot")
-async def reset_bot(interaction):
+async def handle_reset_bot_command(interaction):
     """
     Command to change the reset chatbot.
     """
@@ -183,7 +189,7 @@ async def reset_bot(interaction):
 
 
 @tree.command(name="get-model", description="Get the current chatbot model")
-async def get_model(interaction):
+async def handle_get_model_command(interaction):
     """
     Command to get the current chatbot model.
     """
@@ -198,7 +204,7 @@ async def get_model(interaction):
 
 
 @tree.command(name="change-model", description="Change the chatbot model")
-async def change_model(interaction, model_name: str):
+async def handle_change_model_command(interaction, model_name: str):
     """
     Command to change the chatbot model.
     """
@@ -224,7 +230,7 @@ async def change_model(interaction, model_name: str):
 
 
 @tree.command(name="reset-model", description="Reset the current model to the default one")
-async def reset_model(interaction):
+async def handle_reset_model_command(interaction):
     """
     Command to reset the model to the default one.
     """
@@ -252,7 +258,7 @@ async def reset_model(interaction):
 
 
 @tree.command(name="change-token", description="Change the API token")
-async def change_token(interaction, token: str):
+async def handle_change_token_command(interaction, token: str):
     """
     Command to change the API token.
     """
@@ -272,7 +278,7 @@ async def change_token(interaction, token: str):
 
 
 @tree.command(name="reset-token", description="Reset the API token to the default one")
-async def reset_token(interaction):
+async def handle_reset_token_command(interaction):
     """
     Command to reset the API token to the default one.
     """
@@ -292,7 +298,7 @@ async def reset_token(interaction):
 
 
 @tree.command(name="clear-context", description="Clear context")
-async def clear_context(interaction):
+async def handle_clear_context_command(interaction):
     """
     Command to clear the context of the chatbot.
     """
@@ -307,7 +313,7 @@ async def clear_context(interaction):
 
 
 @tree.command(name="enable-channel-monitoring", description="Enable monitoring of the current channel")
-async def enable_channel_monitoring(interaction):
+async def handle_enable_channel_monitoring_command(interaction):
     """
     Command to enable the current channel monitoring.
     """
@@ -351,7 +357,7 @@ async def enable_channel_monitoring(interaction):
 
 
 @tree.command(name="disable-channel-monitoring", description="Disable monitoring of the current channel")
-async def disable_channel_monitoring(interaction):
+async def handle_disable_channel_monitoring_command(interaction):
     """
     Command to disable the current channel monitoring.
     """
@@ -395,7 +401,7 @@ async def disable_channel_monitoring(interaction):
 
 
 @tree.command(name="get-channel-whitelist", description="Get the channel whitelist")
-async def get_channel_whitelist(interaction):
+async def handle_get_channel_whitelist_command(interaction):
     """
     Command to get the channel whitelist.
     """
@@ -413,7 +419,7 @@ async def get_channel_whitelist(interaction):
 
 
 @tree.command(name="get-channel-blacklist", description="Get the channel blacklist")
-async def get_channel_blacklist(interaction):
+async def handle_get_channel_blacklist_command(interaction):
     """
     Command to get the channel blacklist.
     """
@@ -431,7 +437,7 @@ async def get_channel_blacklist(interaction):
 
 
 @tree.command(name="get-channel-monitor-mode", description="Get the current monitoring mode")
-async def get_channel_monitor_mode(interaction):
+async def handle_get_channel_monitor_mode_command(interaction):
     """
     Command to get the current channel monitoring mode.
     """
@@ -443,7 +449,7 @@ async def get_channel_monitor_mode(interaction):
 
 
 @tree.command(name="change-channel-monitor-mode", description="Change the current monitoring mode")
-async def change_channel_monitor_mode(interaction, new_mode: str):
+async def handle_change_channel_monitor_mode_command(interaction, new_mode: str):
     """
     Command to change the current channel monitoring mode.
     """
@@ -460,7 +466,7 @@ async def change_channel_monitor_mode(interaction, new_mode: str):
 
 
 @tree.command(name="enable-name-prefix", description="Enable prefixing username / nickname to chat messages")
-async def enable_name_prefix(interaction):
+async def handle_enable_name_prefix_command(interaction):
     """
     Command to enable name prefix.
     """
@@ -471,7 +477,7 @@ async def enable_name_prefix(interaction):
 
 
 @tree.command(name="disable-name-prefix", description="Disable prefixing username / nickname to chat messages")
-async def disable_name_prefix(interaction):
+async def handle_disable_name_prefix_command(interaction):
     """
     Command to disable name prefix.
     """
@@ -482,7 +488,7 @@ async def disable_name_prefix(interaction):
 
 
 @tree.command(name="register-nickname", description="Register / update a nickname")
-async def register_nickname(interaction, nickname: str):
+async def handle_register_nickname_command(interaction, nickname: str):
     """
     Registers or updates a nickname for the user who sent the command.
     """
@@ -510,7 +516,7 @@ async def register_nickname(interaction, nickname: str):
 
 
 @tree.command(name="unregister-nickname", description="Unregister a nickname if registered")
-async def unregister_nickname(interaction):
+async def handle_unregister_nickname_command(interaction):
     """
     Unregisters the nickname for the user who sent the command.
     """
@@ -539,7 +545,7 @@ async def unregister_nickname(interaction):
 
 
 @tree.command(name="get-nickname", description="Get the nickname if registered")
-async def get_nickname(interaction):
+async def handle_get_nickname_command(interaction):
     """
     Returns the nickname for the user who sent the command.
     """
