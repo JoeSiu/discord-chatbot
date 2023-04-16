@@ -337,7 +337,7 @@ async def handle_clear_context_command(interaction):
 
 
 @tree.command(name="enable-channel-monitoring", description="Enable monitoring of the current channel")
-async def handle_enable_channel_monitoring_command(interaction, channel_id: str = None):
+async def handle_enable_channel_monitoring_command(interaction, channel: discord.TextChannel = None):
     """
     Command to enable the current channel monitoring.
     """
@@ -345,7 +345,7 @@ async def handle_enable_channel_monitoring_command(interaction, channel_id: str 
 
     try:
         target_channel_id = str(
-            interaction.channel_id) if channel_id is None else channel_id
+            interaction.channel_id) if channel is None else channel.id
 
         if current_channel_monitor_mode == ChannelMonitorMode.NONE:
             if target_channel_id in channel_whitelist:
@@ -382,7 +382,7 @@ async def handle_enable_channel_monitoring_command(interaction, channel_id: str 
 
 
 @tree.command(name="disable-channel-monitoring", description="Disable monitoring of the current channel")
-async def handle_disable_channel_monitoring_command(interaction, channel_id: str = None):
+async def handle_disable_channel_monitoring_command(interaction,channel: discord.TextChannel = None):
     """
     Command to disable the current channel monitoring.
     """
@@ -390,7 +390,7 @@ async def handle_disable_channel_monitoring_command(interaction, channel_id: str
 
     try:
         target_channel_id = str(
-            interaction.channel_id) if channel_id is None else channel_id
+            interaction.channel_id) if channel is None else channel.id
 
         if current_channel_monitor_mode == ChannelMonitorMode.NONE:
             if target_channel_id in channel_whitelist:
