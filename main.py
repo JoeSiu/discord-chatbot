@@ -68,14 +68,51 @@ current_channel_monitor_mode = ChannelMonitorMode.ALL  # Current monitor mode
 current_name_prefix_mode = True  # Current name prefix mode
 
 
+@tree.command(name="send_to_channel", description="Send a message to the bot in a channel without showing your message")
+async def handle_send_to_channel_command(interaction, user_input: str, channel: discord.TextChannel, delay: float = 0.0, show_input: bool = True):
+    """
+    Command to send a message to the current bot in a channel without showing your message.
+    """
+    try:
+        # Defer sending message as query takes time
+        await interaction.response.defer()
+        
+        if (delay > 0.0):
+            logger.info(
+                f"Recieved /send_to_channel command with {delay} seconds delay...")
+            await asyncio.sleep(delay)
+        
+        # Send user input in embeds for preview
+        if show_input:
+            embeds = create_embeds(user_input)
+            await interaction.followup.send(content=f"> The following message had been sent to channel `{channel.name} ({channel.id})`.", embeds=embeds)
+        
+        async with channel.typing():
+            # Add name prefix
+            if current_name_prefix_mode:
+                author_name = nicknames.get(
+                    str(interaction.user.id), interaction.user.name)
+                user_input = add_prefix_to_message(
+                    f"{author_name}: ", user_input)
+
+            logger.info(
+                f"Input from {interaction.user.name} to channel {channel.name} ({channel.id}) (via /send_to_channel): {user_input}")
+
+            status, response = await query(user_input)
+
+            response = format_response_based_on_status(response, status)
+
+            await channel.send(content=response)
+    except Exception as e:
+        logger.exception(f"send_to_channel error:  {type(e).__name__} - {e}")
+        await interaction.followup.send(f"> Sorry, an error occured while trying to send the message to channel.\n\n`{type(e).__name__} - {e}`")
+
+
 @tree.command(name="send", description="Send a message to the bot")
-async def handle_send_command(interaction, user_input: str, delay: float = 0.0):
+async def handle_send_command(interaction, user_input: str, delay: float = 0.0, show_input: bool = True):
     """
     Command to send a message to the current chatbot.
     """
-    MAX_CHARS_PER_EMBED = 4096
-    MAX_EMBEDS_PER_MESSAGE = 10
-
     try:
         # Defer sending message as query takes time
         await interaction.response.defer()
@@ -85,23 +122,10 @@ async def handle_send_command(interaction, user_input: str, delay: float = 0.0):
                 f"Recieved /send command with {delay} seconds delay...")
             await asyncio.sleep(delay)
 
-        preview = user_input
-        # Split message into multiple embeds if necessary
-        if len(preview) <= MAX_CHARS_PER_EMBED:
-            embed = discord.Embed(description=preview)
-            await interaction.followup.send(embed=embed)
-        else:
-            embeds = []
-            while preview:
-                chunk = preview[:MAX_CHARS_PER_EMBED]
-                preview = preview[MAX_CHARS_PER_EMBED:]
-                embed = discord.Embed(description=chunk)
-                embeds.append(embed)
-            # Send a list of embeds as separate messages, respecting Discord's character and embed limits.
-            for i in range(0, len(embeds), MAX_EMBEDS_PER_MESSAGE):
-                # Send up to MAX_EMBEDS_PER_MESSAGE embeds in a single message
-                message_embeds = embeds[i:i + MAX_EMBEDS_PER_MESSAGE]
-                await interaction.followup.send(embeds=message_embeds)
+        # Send user input in embeds for preview
+        if show_input:
+            embeds = create_embeds(user_input)
+            await interaction.followup.send(embeds=embeds)
 
         async with interaction.channel.typing():
             # Add name prefix
@@ -120,7 +144,7 @@ async def handle_send_command(interaction, user_input: str, delay: float = 0.0):
 
             await interaction.followup.send(content=response)
     except Exception as e:
-        logger.exception(f"change_bot error:  {type(e).__name__} - {e}")
+        logger.exception(f"send error:  {type(e).__name__} - {e}")
         await interaction.followup.send(f"> Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -140,7 +164,7 @@ async def handle_get_bot_command(interaction):
 
 
 @tree.command(name="change-bot", description="Change the current bot")
-async def handle_change_bot_command(interaction, bot_name: str):
+async def handle_change_bot_command(interaction, bot_name: str = None):
     """
     Command to change the current chatbot.
     """
@@ -204,7 +228,7 @@ async def handle_get_model_command(interaction):
 
 
 @tree.command(name="change-model", description="Change the chatbot model")
-async def handle_change_model_command(interaction, model_name: str):
+async def handle_change_model_command(interaction, model_name: str = None):
     """
     Command to change the chatbot model.
     """
@@ -313,40 +337,41 @@ async def handle_clear_context_command(interaction):
 
 
 @tree.command(name="enable-channel-monitoring", description="Enable monitoring of the current channel")
-async def handle_enable_channel_monitoring_command(interaction):
+async def handle_enable_channel_monitoring_command(interaction, channel_id: str = None):
     """
     Command to enable the current channel monitoring.
     """
     global current_channel_monitor_mode
 
     try:
+        target_channel_id = str(
+            interaction.channel_id) if channel_id is None else channel_id
+
         if current_channel_monitor_mode == ChannelMonitorMode.NONE:
-            if interaction.channel_id in channel_whitelist:
-                message = "> This channel is already being monitored."
+            if target_channel_id in channel_whitelist:
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` is already being monitored."
             else:
-                channel_whitelist.append(interaction.channel_id)
+                channel_whitelist.append(target_channel_id)
 
                 # Save to JSON
-                if interaction.channel_id not in config.data["channel_whitelist"]:
-                    config.data["channel_whitelist"].append(
-                        interaction.channel_id)
+                if target_channel_id not in config.data["channel_whitelist"]:
+                    config.data["channel_whitelist"].append(target_channel_id)
                     config.save_config()
 
-                message = "> This channel has been added to the monitoring whitelist."
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` has been added to the monitoring whitelist."
 
         elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
-            if interaction.channel_id in channel_blacklist:
-                channel_blacklist.remove(interaction.channel_id)
+            if target_channel_id in channel_blacklist:
+                channel_blacklist.remove(target_channel_id)
 
                 # Save to JSON
-                if interaction.channel_id in config.data["channel_blacklist"]:
-                    config.data["channel_blacklist"].remove(
-                        interaction.channel_id)
+                if target_channel_id in config.data["channel_blacklist"]:
+                    config.data["channel_blacklist"].remove(target_channel_id)
                     config.save_config()
 
-                message = "> This channel has been removed from the monitoring blacklist."
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` has been removed from the monitoring blacklist."
             else:
-                message = "> This channel is already being monitored."
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` is already being monitored."
 
         logger.info(message)
         await interaction.response.send_message(content=message)
@@ -357,40 +382,41 @@ async def handle_enable_channel_monitoring_command(interaction):
 
 
 @tree.command(name="disable-channel-monitoring", description="Disable monitoring of the current channel")
-async def handle_disable_channel_monitoring_command(interaction):
+async def handle_disable_channel_monitoring_command(interaction, channel_id: str = None):
     """
     Command to disable the current channel monitoring.
     """
     global current_channel_monitor_mode
 
     try:
+        target_channel_id = str(
+            interaction.channel_id) if channel_id is None else channel_id
+
         if current_channel_monitor_mode == ChannelMonitorMode.NONE:
-            if interaction.channel_id in channel_whitelist:
-                channel_whitelist.remove(interaction.channel_id)
+            if target_channel_id in channel_whitelist:
+                channel_whitelist.remove(target_channel_id)
 
                 # Save to JSON
-                if interaction.channel_id in config.data["channel_whitelist"]:
-                    config.data["channel_whitelist"].remove(
-                        interaction.channel_id)
+                if target_channel_id in config.data["channel_whitelist"]:
+                    config.data["channel_whitelist"].remove(target_channel_id)
                     config.save_config()
 
-                message = "> This channel has been removed from the monitoring whitelist."
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` has been removed from the monitoring whitelist."
             else:
-                message = "> This channel is already not being monitored."
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` is already not being monitored."
 
         elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
-            if interaction.channel_id in channel_blacklist:
-                message = "> This channel is already not being monitored."
+            if target_channel_id in channel_blacklist:
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` is already not being monitored."
             else:
-                channel_blacklist.append(interaction.channel_id)
+                channel_blacklist.append(target_channel_id)
 
                 # Save to JSON
-                if interaction.channel_id not in config.data["channel_blacklist"]:
-                    config.data["channel_blacklist"].append(
-                        interaction.channel_id)
+                if target_channel_id not in config.data["channel_blacklist"]:
+                    config.data["channel_blacklist"].append(target_channel_id)
                     config.save_config()
 
-                message = "> This channel has been added to the monitoring blacklist."
+                message = f"> Channel `{client.get_channel(int(target_channel_id))} ({target_channel_id})` has been added to the monitoring blacklist."
 
         logger.info(message)
         await interaction.response.send_message(content=message)
@@ -411,7 +437,7 @@ async def handle_get_channel_whitelist_command(interaction):
         message = "There are no whitelisted channels."
     else:
         channel_list = ", ".join(
-            [f"`{client.get_channel(channel)} ({channel})`" for channel in channel_whitelist])
+            [f"`{client.get_channel(int(channel))} ({channel})`" for channel in channel_whitelist])
         message = f"> The whitelisted channels are: {channel_list}."
 
     logger.info(message)
@@ -429,7 +455,7 @@ async def handle_get_channel_blacklist_command(interaction):
         message = "There are no blacklisted channels"
     else:
         channel_list = ", ".join(
-            [f"`{client.get_channel(channel)} ({channel})`" for channel in channel_blacklist])
+            [f"`{client.get_channel(int(channel))} ({channel})`" for channel in channel_blacklist])
         message = f"> The blacklisted channels are: {channel_list}."
 
     logger.info(message)
@@ -488,12 +514,13 @@ async def handle_disable_name_prefix_command(interaction):
 
 
 @tree.command(name="register-nickname", description="Register / update a nickname")
-async def handle_register_nickname_command(interaction, nickname: str):
+async def handle_register_nickname_command(interaction, nickname: str, user: discord.User = None):
     """
     Registers or updates a nickname for the user who sent the command.
     """
     try:
-        key = str(interaction.user.id)
+        target_user = user if user else interaction.user
+        key = str(target_user.id)
 
         # Check if nickname already exists
         if key in nicknames:
@@ -516,12 +543,13 @@ async def handle_register_nickname_command(interaction, nickname: str):
 
 
 @tree.command(name="unregister-nickname", description="Unregister a nickname if registered")
-async def handle_unregister_nickname_command(interaction):
+async def handle_unregister_nickname_command(interaction, user: discord.User = None):
     """
     Unregisters the nickname for the user who sent the command.
     """
     try:
-        key = str(interaction.user.id)
+        target_user = user if user else interaction.user
+        key = str(target_user.id)
 
         # Check if nickname exists
         if key in nicknames:
@@ -586,12 +614,12 @@ async def on_message(message):
 
         # Check if current mode is NONE, and only query messages in the whitelist
         if current_channel_monitor_mode == ChannelMonitorMode.NONE:
-            if message.channel.id not in channel_whitelist:
+            if str(message.channel.id) not in channel_whitelist:
                 return
 
         # Check if current mode is ALL, and ignore messages in the blacklist
         elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
-            if message.channel.id in channel_blacklist:
+            if str(message.channel.id) in channel_blacklist:
                 return
 
         user_input = message.content
@@ -737,6 +765,24 @@ def format_response_based_on_status(response: str, status: QueryStatus):
 
     elif status == QueryStatus.UNKNOWN_RESPONSE_ERROR:
         return f"> Sorry, your request couldn't be processed, below are the response received:\n\n{response}"
+
+
+def create_embeds(text: str):
+    MAX_CHARS_PER_EMBED = 4096
+
+    embeds = []
+    # Split message into multiple embeds if necessary
+    if len(text) <= MAX_CHARS_PER_EMBED:
+        embed = discord.Embed(description=text)
+        embeds.append(embed)
+    else:
+        while text:
+            chunk = text[:MAX_CHARS_PER_EMBED]
+            text = text[MAX_CHARS_PER_EMBED:]
+            embed = discord.Embed(description=chunk)
+            embeds.append(embed)
+
+    return embeds
 
 
 def restore_from_config():
