@@ -109,7 +109,7 @@ async def handle_send_command(interaction, user_input: str, delay: float = 0.0):
                 author_name = nicknames.get(
                     str(interaction.user.id), interaction.user.name)
                 user_input = add_prefix_to_message(
-                    f"{user_input}: ", author_name)
+                    f"{author_name}: ", user_input)
 
             logger.info(
                 f"Input from {interaction.user.name} (via /send): {user_input}")
