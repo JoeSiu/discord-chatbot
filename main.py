@@ -11,15 +11,10 @@ from enum import Enum
 from chatbots.hugging_face_chatbot import HuggingFaceChatBot
 from chatbots.poe_chatbot import PoeChatBot
 
-# Setup logger
-# Remove root logger stream output
-for handler in logging.getLogger().handlers:
-    if isinstance(handler, logging.StreamHandler):
-        logging.getLogger().removeHandler(handler)
-
+# Configure logging
+logging.getLogger().handlers.clear()  # Remove root logger stream output
 discord.utils.setup_logging(level=logging.INFO)
 logger = logging.getLogger('discord')
-
 handler = logging.handlers.RotatingFileHandler(
     filename='discord.log',
     encoding='utf-8',
@@ -44,6 +39,7 @@ tree = app_commands.CommandTree(client)
 chatbot = None
 
 
+# Define enums
 class BotType(Enum):
     POE = "poe"
     HUGGING_FACE = "hugging-face"
@@ -62,21 +58,13 @@ class QueryStatus(Enum):
     UNKNOWN_RESPONSE_ERROR = 4
 
 
-# Nickname list
-nicknames = {}
-
-# Initialize channel whitelist and blacklist
-channel_whitelist = []
-channel_blacklist = []
-
-# Current bot
-current_bot = BotType.POE
-
-# Current monitor mode
-current_channel_monitor_mode = ChannelMonitorMode.ALL
-
-# Current name prefix mode
-current_name_prefix_mode = True
+# Initialize variables
+nicknames = {}  # Nickname list
+channel_whitelist = []  # Initialize channel whitelist
+channel_blacklist = []  # Initialize channel blacklist
+current_bot = BotType.POE  # Current bot
+current_channel_monitor_mode = ChannelMonitorMode.ALL  # Current monitor mode
+current_name_prefix_mode = True  # Current name prefix mode
 
 
 @tree.command(name="send", description="Send a message to the bot")
@@ -113,7 +101,7 @@ async def send(interaction, user_input: str):
             # Add name prefix
             if current_name_prefix_mode:
                 author_name = nicknames.get(
-                    interaction.user.name, interaction.user.name)
+                    str(interaction.user.id), interaction.user.name)
                 user_input = add_prefix_to_message(
                     f"{user_input}: ", author_name)
 
@@ -325,22 +313,41 @@ async def enable_channel_monitoring(interaction):
     """
     global current_channel_monitor_mode
 
-    if current_channel_monitor_mode == ChannelMonitorMode.NONE:
-        if interaction.channel_id in channel_whitelist:
-            message = "> This channel is already being monitored."
-        else:
-            channel_whitelist.append(interaction.channel_id)
-            message = "> This channel has been added to the monitoring whitelist."
+    try:
+        if current_channel_monitor_mode == ChannelMonitorMode.NONE:
+            if interaction.channel_id in channel_whitelist:
+                message = "> This channel is already being monitored."
+            else:
+                channel_whitelist.append(interaction.channel_id)
 
-    elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
-        if interaction.channel_id in channel_blacklist:
-            channel_blacklist.remove(interaction.channel_id)
-            message = "> This channel has been removed from the monitoring blacklist."
-        else:
-            message = "> This channel is already being monitored."
+                # Save to JSON
+                if interaction.channel_id not in config.data["channel_whitelist"]:
+                    config.data["channel_whitelist"].append(
+                        interaction.channel_id)
+                    config.save_config()
 
-    logger.info(message)
-    await interaction.response.send_message(content=message)
+                message = "> This channel has been added to the monitoring whitelist."
+
+        elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
+            if interaction.channel_id in channel_blacklist:
+                channel_blacklist.remove(interaction.channel_id)
+
+                # Save to JSON
+                if interaction.channel_id in config.data["channel_blacklist"]:
+                    config.data["channel_blacklist"].remove(
+                        interaction.channel_id)
+                    config.save_config()
+
+                message = "> This channel has been removed from the monitoring blacklist."
+            else:
+                message = "> This channel is already being monitored."
+
+        logger.info(message)
+        await interaction.response.send_message(content=message)
+    except Exception as e:
+        logger.exception(
+            f"enable_channel_monitoring error:  {type(e).__name__} - {e}")
+        await interaction.response.send_message(f"> Sorry, an error occured while trying to enable channel monitoring.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="disable-channel-monitoring", description="Disable monitoring of the current channel")
@@ -350,22 +357,41 @@ async def disable_channel_monitoring(interaction):
     """
     global current_channel_monitor_mode
 
-    if current_channel_monitor_mode == ChannelMonitorMode.NONE:
-        if interaction.channel_id in channel_whitelist:
-            channel_whitelist.remove(interaction.channel_id)
-            message = "> This channel has been removed from the monitoring whitelist."
-        else:
-            message = "> This channel is already not being monitored."
+    try:
+        if current_channel_monitor_mode == ChannelMonitorMode.NONE:
+            if interaction.channel_id in channel_whitelist:
+                channel_whitelist.remove(interaction.channel_id)
 
-    elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
-        if interaction.channel_id in channel_blacklist:
-            message = "> This channel is already not being monitored."
-        else:
-            channel_blacklist.append(interaction.channel_id)
-            message = "> This channel has been added to the monitoring blacklist."
+                # Save to JSON
+                if interaction.channel_id in config.data["channel_whitelist"]:
+                    config.data["channel_whitelist"].remove(
+                        interaction.channel_id)
+                    config.save_config()
 
-    logger.info(message)
-    await interaction.response.send_message(content=message)
+                message = "> This channel has been removed from the monitoring whitelist."
+            else:
+                message = "> This channel is already not being monitored."
+
+        elif current_channel_monitor_mode == ChannelMonitorMode.ALL:
+            if interaction.channel_id in channel_blacklist:
+                message = "> This channel is already not being monitored."
+            else:
+                channel_blacklist.append(interaction.channel_id)
+
+                # Save to JSON
+                if interaction.channel_id not in config.data["channel_blacklist"]:
+                    config.data["channel_blacklist"].append(
+                        interaction.channel_id)
+                    config.save_config()
+
+                message = "> This channel has been added to the monitoring blacklist."
+
+        logger.info(message)
+        await interaction.response.send_message(content=message)
+    except Exception as e:
+        logger.exception(
+            f"disable_channel_monitoring error:  {type(e).__name__} - {e}")
+        await interaction.response.send_message(f"> Sorry, an error occured while trying to disable channel monitoring.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-channel-whitelist", description="Get the channel whitelist")
@@ -460,19 +486,27 @@ async def register_nickname(interaction, nickname: str):
     """
     Registers or updates a nickname for the user who sent the command.
     """
-    author_name = interaction.user.name
+    try:
+        key = str(interaction.user.id)
 
-    # Check if nickname already exists
-    if author_name in nicknames:
-        message = f"> Your nickname has been updated to `{nickname}`."
-    else:
-        message = f"> Your nickname `{nickname}` has been registered."
+        # Check if nickname already exists
+        if key in nicknames:
+            message = f"> Your nickname has been updated from `{nicknames[key]}` to `{nickname}`."
+        else:
+            message = f"> Your nickname `{nickname}` has been registered."
 
-    # Update the nickname
-    nicknames[author_name] = nickname
+        # Update the nickname
+        nicknames[key] = nickname
 
-    logger.info(message)
-    await interaction.response.send_message(content=message)
+        # Save to JSON
+        config.data["nicknames"][key] = nickname
+        config.save_config()
+
+        logger.info(message)
+        await interaction.response.send_message(content=message)
+    except Exception as e:
+        logger.exception(f"register_nickname error:  {type(e).__name__} - {e}")
+        await interaction.response.send_message(f"> Sorry, an error occured while trying to register nickname.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="unregister-nickname", description="Unregister a nickname if registered")
@@ -480,17 +514,28 @@ async def unregister_nickname(interaction):
     """
     Unregisters the nickname for the user who sent the command.
     """
-    author_name = interaction.user.name
+    try:
+        key = str(interaction.user.id)
 
-    # Check if nickname exists
-    if author_name in nicknames:
-        del nicknames[author_name]
-        message = f"> Your nickname has been unregistered."
-    else:
-        message = f"> You don't have a registered nickname."
+        # Check if nickname exists
+        if key in nicknames:
+            del nicknames[key]
 
-    logger.info(message)
-    await interaction.response.send_message(content=message)
+            # Save to JSON
+            if key in config.data["nicknames"]:
+                del config.data["nicknames"][key]
+                config.save_config()
+
+            message = f"> Your nickname has been unregistered."
+        else:
+            message = f"> You don't have a registered nickname."
+
+        logger.info(message)
+        await interaction.response.send_message(content=message)
+    except Exception as e:
+        logger.exception(
+            f"unregister_nickname error:  {type(e).__name__} - {e}")
+        await interaction.response.send_message(f"> Sorry, an error occured while trying to unregister nickname.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-nickname", description="Get the nickname if registered")
@@ -498,11 +543,11 @@ async def get_nickname(interaction):
     """
     Returns the nickname for the user who sent the command.
     """
-    author_name = interaction.user.name
+    key = str(interaction.user.id)
 
     # Check if nickname exists
-    if author_name in nicknames:
-        message = f"> Your current nickname is `{nicknames[author_name]}`."
+    if key in nicknames:
+        message = f"> Your current nickname is `{nicknames[key]}`."
     else:
         message = f"> You don't have a registered nickname."
 
@@ -552,7 +597,7 @@ async def on_message(message):
         # Add name prefix
         if current_name_prefix_mode:
             author_name = nicknames.get(
-                message.author.name, message.author.name)
+                str(message.author.id), message.author.name)
             user_input = add_prefix_to_message(f"{author_name}: ", user_input)
 
         # Get response from chatbot
@@ -639,7 +684,7 @@ async def query(message: str):
         success, response = await chatbot.query(message, debug=config.DEBUG)
     except AttributeError as e:
         status = QueryStatus.QUERY_ATTRIBUTE_ERROR
-        logger.error(
+        logger.exception(
             f"Query AttributeError:  {type(e).__name__} - {e}, trying to re-initialize the chatbot")
         change_bot(current_bot)
         return status, e
@@ -688,6 +733,28 @@ def format_response_based_on_status(response: str, status: QueryStatus):
         return f"> Sorry, your request couldn't be processed, below are the response received:\n\n{response}"
 
 
+def restore_from_config():
+    global nicknames, channel_whitelist, channel_blacklist
+
+    try:
+        success = config.load_config()
+
+        if success:
+            nicknames = config.data["nicknames"].copy()
+            channel_whitelist = config.data["channel_whitelist"].copy()
+            channel_blacklist = config.data["channel_blacklist"].copy()
+
+            logger.info(
+                f"Restored from config file {config.CONFIG_FILE}, nicknames: {nicknames}, channel_whitelist: {channel_whitelist}, channel_blacklist: {channel_blacklist}")
+
+        else:
+            logger.info(f"Created config file {config.CONFIG_FILE}")
+
+    except AttributeError as e:
+        logger.exception(
+            f"restore_from_config error:  {type(e).__name__} - {e}")
+
+
 def main():
     global chatbot, current_monitor_mode, current_name_prefix_mode
 
@@ -715,6 +782,9 @@ def main():
 
     # Set default enable name prefix
     change_name_prefix_mode(args.enable_name_prefix)
+
+    # Restore variables from config
+    restore_from_config()
 
     client.run(config.DISCORD_TOKEN, log_handler=None)
 
