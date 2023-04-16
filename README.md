@@ -110,6 +110,7 @@ Make sure you have python and docker installed
 - You can also use `$ignore` at the beginning of a message to instruct the bot to ignore that message.
 - In channel monitor mode, setting it to `all` will cause the bot to reply to messages in all channels, except for those in the blacklist. Setting it to `none` will prevent the bot from replying to messages in any channel, except for those in the whitelist.
 - When name prefix is enabled, the bot will automatically add the Discord username or nickname (if registered via the `/register-nickname` command) of the message author to the front of the message. For example, the message `hello` will become `Joe: hello` when sent to the bot. This feature is useful for multi-person conversations, especially when giving the bot a prompt.
+- Nicknames, channel whitelist and blacklists are stored inside `config.json` file.
 
 ## Limitation
 
