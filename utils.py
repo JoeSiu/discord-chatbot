@@ -38,3 +38,13 @@ def async_wrap_iter(it):
 
     threading.Thread(target=iter_to_queue).start()
     return yield_queue_items()
+
+
+def normalize_text(text):
+    """
+    Normalize text to remove whitespace characters and capitalization
+
+    Args:
+        text (str): The text to normalize.
+    """
+    return text.strip().lower()    

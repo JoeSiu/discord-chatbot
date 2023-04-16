@@ -6,6 +6,7 @@ import argparse
 import discord
 from discord import app_commands
 import config
+import utils
 
 from enum import Enum
 
@@ -475,10 +476,11 @@ async def handle_get_channel_monitor_mode_command(interaction):
 
 
 @tree.command(name="change-channel-monitor-mode", description="Change the current monitoring mode")
-async def handle_change_channel_monitor_mode_command(interaction, new_mode: str):
+async def handle_change_channel_monitor_mode_command(interaction, new_mode: str = None):
     """
     Command to change the current channel monitoring mode.
     """
+    new_mode = utils.normalize_text(new_mode)
     success = change_channel_monitor_mode(new_mode)
 
     if success:
