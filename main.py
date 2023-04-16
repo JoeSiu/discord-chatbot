@@ -126,7 +126,7 @@ async def send(interaction, user_input: str):
 
             await interaction.followup.send(content=response)
     except Exception as e:
-        logger.info("change_bot error:  {type(e).__name__} - {e}")
+        logger.exception(f"change_bot error:  {type(e).__name__} - {e}")
         await interaction.followup.send(f"> Sorry, an error occured while trying to send the message.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -141,7 +141,7 @@ async def get_bot(interaction):
         logger.info(message)
         await interaction.response.send_message(message)
     except Exception as e:
-        logger.info("get_bot error:  {type(e).__name__} - {e}")
+        logger.exception(f"get_bot error:  {type(e).__name__} - {e}")
         await interaction.response.send_message(f"> Sorry, an error occured while trying to get bot.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -166,7 +166,7 @@ async def change_bot(interaction, bot_name: str):
         logger.info(message)
         await interaction.followup.send(message)
     except Exception as e:
-        logger.info("change_bot error:  {type(e).__name__} - {e}")
+        logger.exception(f"change_bot error:  {type(e).__name__} - {e}")
         await interaction.followup.send(f"> Sorry, an error occured while trying to change bot.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -190,7 +190,7 @@ async def reset_bot(interaction):
         logger.info(message)
         await interaction.followup.send(message)
     except Exception as e:
-        logger.info("reset_bot error:  {type(e).__name__} - {e}")
+        logger.exception(f"reset_bot error:  {type(e).__name__} - {e}")
         await interaction.followup.send(f"> Sorry, an error occured while trying to reset bot.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -205,7 +205,7 @@ async def get_model(interaction):
         logger.info(message)
         await interaction.response.send_message(message)
     except Exception as e:
-        logger.info("get_model error:  {type(e).__name__} - {e}")
+        logger.exception(f"get_model error:  {type(e).__name__} - {e}")
         await interaction.response.send_message(f"> Sorry, an error occured while trying to get model.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -231,7 +231,7 @@ async def change_model(interaction, model_name: str):
         logger.info(message)
         await interaction.response.send_message(message)
     except Exception as e:
-        logger.info("change_model error:  {type(e).__name__} - {e}")
+        logger.exception(f"change_model error:  {type(e).__name__} - {e}")
         await interaction.response.send_message(f"> Sorry, an error occured while trying to change model.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -259,7 +259,7 @@ async def reset_model(interaction):
 
         await interaction.response.send_message(message)
     except Exception as e:
-        logger.info("reset_model error:  {type(e).__name__} - {e}")
+        logger.exception(f"reset_model error:  {type(e).__name__} - {e}")
         await interaction.response.send_message(f"> Sorry, an error occured while trying to reset model.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -279,7 +279,7 @@ async def change_token(interaction, token: str):
 
         await interaction.response.send_message(message)
     except Exception as e:
-        logger.info("change_token error:  {type(e).__name__} - {e}")
+        logger.exception(f"change_token error:  {type(e).__name__} - {e}")
         await interaction.response.send_message(f"> Sorry, an error occured while trying to change token.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -299,7 +299,7 @@ async def reset_token(interaction):
 
         await interaction.response.send_message(message)
     except Exception as e:
-        logger.info("reset_token error:  {type(e).__name__} - {e}")
+        logger.exception(f"reset_token error:  {type(e).__name__} - {e}")
         await interaction.response.send_message(f"> Sorry, an error occured while trying to reset token.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -314,7 +314,7 @@ async def clear_context(interaction):
         logger.info(message)
         await interaction.response.send_message(message)
     except Exception as e:
-        logger.info("clear_context error:  {type(e).__name__} - {e}")
+        logger.exception(f"clear_context error:  {type(e).__name__} - {e}")
         await interaction.response.send_message(f"> Sorry, an error occured while trying to clear context.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -566,7 +566,7 @@ async def on_message(message):
             await message.channel.send(content=response)
 
     except Exception as e:
-        logger.error(f"on_message error:  {type(e).__name__} - {e}")
+        logger.exception(f"on_message error:  {type(e).__name__} - {e}")
         await message.channel.send(content=f"> Sorry, fail to process your request.\n\n`{type(e).__name__} - {e}`")
 
 
@@ -645,7 +645,7 @@ async def query(message: str):
         return status, e
     except Exception as e:
         status = QueryStatus.UNKNOWN_QUERY_ERROR
-        logger.error(f"Query error:  {type(e).__name__} - {e}")
+        logger.exception(f"Query error:  {type(e).__name__} - {e}")
         return status, e
 
     # Empty response
