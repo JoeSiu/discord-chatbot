@@ -19,7 +19,7 @@ To run the Discord ChatBot, follow these steps:
 ### Setup
 
 1. Clone this repository using Git.
-2. Duplicate the `.env.template` file and rename it to `.env`. Replace each key with the corresponding values.
+2. Duplicate the `.env.example` file and rename it to `.env`. Replace each key with the corresponding values.
 3. Go to [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
 4. Create a bot and copy its token.
 5. Paste the token into the `DISCORD_TOKEN` field in the `.env` file.
