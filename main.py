@@ -480,7 +480,6 @@ async def handle_change_channel_monitor_mode_command(interaction, new_mode: str 
     """
     Command to change the current channel monitoring mode.
     """
-    new_mode = utils.normalize_text(new_mode)
     success = change_channel_monitor_mode(new_mode)
 
     if success:
@@ -669,7 +668,7 @@ def change_bot(new_bot):
 
     if isinstance(new_bot, str):
         try:
-            new_bot = BotType(new_bot.lower())
+            new_bot = BotType(utils.normalize_text(new_bot))
         except ValueError:
             logger.warning(f"Invalid bot type: {new_bot}")
             return False
@@ -695,7 +694,7 @@ def change_channel_monitor_mode(new_mode):
 
     if isinstance(new_mode, str):
         try:
-            new_mode = ChannelMonitorMode(new_mode.lower())
+            new_mode = ChannelMonitorMode(utils.normalize_text(new_mode))
         except ValueError:
             logger.warning(f"Invalid channel monitor mode: {new_mode}")
             return False

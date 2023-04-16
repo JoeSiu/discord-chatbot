@@ -180,7 +180,7 @@ class PoeChatBot(ChatBot):
         # Loop through the items in bot_names
         for key, value in self.get_available_models():
             # If the value matches the given model_name, return the corresponding key
-            if value == model_name:
+            if utils.normalize_text(value) == utils.normalize_text(model_name):
                 return key
         # If no key matches the given model_name, return None
         return None
@@ -199,7 +199,7 @@ class PoeChatBot(ChatBot):
         # Loop through the items in bot_names
         for key, value in self.get_available_models():
             # If the value matches the given model_name, return the corresponding key
-            if key == model_name:
+            if utils.normalize_text(key) == utils.normalize_text(model_name):
                 return value
         # If no key matches the given model_name, return None
         return None
