@@ -524,9 +524,9 @@ async def handle_register_nickname_command(interaction, nickname: str, user: dis
 
         # Check if nickname already exists
         if key in nicknames:
-            message = f"> Your nickname has been updated from `{nicknames[key]}` to `{nickname}`."
+            message = f"> User `{user.name}` (`{user.id}`)'s nickname has been updated from `{nicknames[key]}` to `{nickname}`."
         else:
-            message = f"> Your nickname `{nickname}` has been registered."
+            message = f"> User `{user.name}` (`{user.id}`)'s nickname `{nickname}` has been registered."
 
         # Update the nickname
         nicknames[key] = nickname
@@ -560,9 +560,9 @@ async def handle_unregister_nickname_command(interaction, user: discord.User = N
                 del config.data["nicknames"][key]
                 config.save_config()
 
-            message = f"> Your nickname has been unregistered."
+            message = f"> User `{user.name}` (`{user.id}`)'s nickname has been unregistered."
         else:
-            message = f"> You don't have a registered nickname."
+            message = f"> User `{user.name}` (`{user.id}`) don't have a registered nickname."
 
         logger.info(message)
         await interaction.response.send_message(content=message)
