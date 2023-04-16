@@ -345,7 +345,7 @@ async def handle_enable_channel_monitoring_command(interaction, channel: discord
 
     try:
         target_channel_id = str(
-            interaction.channel_id) if channel is None else channel.id
+            interaction.channel_id) if channel is None else str(channel.id)
 
         if current_channel_monitor_mode == ChannelMonitorMode.NONE:
             if target_channel_id in channel_whitelist:
@@ -390,7 +390,7 @@ async def handle_disable_channel_monitoring_command(interaction,channel: discord
 
     try:
         target_channel_id = str(
-            interaction.channel_id) if channel is None else channel.id
+            interaction.channel_id) if channel is None else str(channel.id)
 
         if current_channel_monitor_mode == ChannelMonitorMode.NONE:
             if target_channel_id in channel_whitelist:
