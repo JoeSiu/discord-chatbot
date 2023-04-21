@@ -40,11 +40,11 @@ def async_wrap_iter(it):
     return yield_queue_items()
 
 
-def normalize_text(text):
+def normalize_text(text: str):
     """
     Normalize text to remove whitespace characters and capitalization
 
     Args:
         text (str): The text to normalize.
     """
-    return text.strip().lower()    
+    return text.strip().lower() if text is not None else ""    
