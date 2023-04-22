@@ -202,9 +202,9 @@ async def handle_reset_bot_command(interaction):
         success = change_bot(current_bot)
 
         if success:
-            message = f"> Bot has been reset."
+            message = "> Bot has been reset."
         else:
-            message = f"> Fail to reset bot, please try again."
+            message = "> Fail to reset bot, please try again."
 
         logger.info(message)
         await interaction.followup.send(message)
@@ -236,7 +236,7 @@ async def handle_change_model_command(interaction, model_name: str = None):
     try:
         success = chatbot.change_model(model_name)
         if success:
-            message = f"Model has been changed to: `{model_name}`."
+            message = f"> Model has been changed to: `{model_name}`."
         else:
             if current_bot == BotType.POE:
                 available_models = ", ".join(
@@ -498,7 +498,7 @@ async def handle_enable_name_prefix_command(interaction):
     Command to enable name prefix.
     """
     change_name_prefix_mode(True)
-    message = f"> Enabled name prefix"
+    message = "> Enabled name prefix"
     logger.info(message)
     await interaction.response.send_message(content=message)
 
@@ -509,7 +509,7 @@ async def handle_disable_name_prefix_command(interaction):
     Command to disable name prefix.
     """
     change_name_prefix_mode(False)
-    message = f"> Disabled name prefix"
+    message = "> Disabled name prefix"
     logger.info(message)
     await interaction.response.send_message(content=message)
 
@@ -584,7 +584,7 @@ async def handle_get_nickname_command(interaction):
     if key in nicknames:
         message = f"> Your current nickname is `{nicknames[key]}`."
     else:
-        message = f"> You don't have a registered nickname."
+        message = "> You don't have a registered nickname."
 
     logger.info(message)
     await interaction.response.send_message(content=message)
@@ -731,7 +731,7 @@ async def query(message: str):
     # Empty response
     if len(response) == 0:
         status = QueryStatus.EMPTY_RESPONSE_ERROR
-        logger.error(f"Empty response")
+        logger.error("Empty response")
         return status, "Empty response"
 
     # Send response to the same channel
