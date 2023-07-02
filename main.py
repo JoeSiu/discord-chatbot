@@ -677,16 +677,37 @@ def change_bot(new_bot):
         logger.warning(f"Invalid bot type: {type(new_bot)}")
         return False
 
-    if new_bot == BotType.POE:
-        chatbot = PoeChatBot(
-            config.POE_TOKEN, config.POE_MODEL, config.POE_PROXY)
+    try:
+        if new_bot == BotType.POE:            
+            if config.POE_TOKEN == "":
+                logger.warning("POE_TOKEN is not set.")
+                return False
 
-    elif new_bot == BotType.HUGGING_FACE:
-        chatbot = HuggingFaceChatBot(
-            config.HUGGING_FACE_TOKEN, config.HUGGING_FACE_MODEL)
+            if config.POE_MODEL == "":
+                logger.warning("POE_MODEL is not set.")
+                return False
 
-    current_bot = new_bot
-    return True
+            chatbot = PoeChatBot(
+                config.POE_TOKEN, config.POE_MODEL, config.POE_PROXY)
+
+        elif new_bot == BotType.HUGGING_FACE:
+            if config.HUGGING_FACE_TOKEN == "":
+                logger.warning("HUGGING_FACE_TOKEN is not set.")
+                return False
+
+            if config.HUGGING_FACE_MODEL == "":
+                logger.warning("HUGGING_FACE_MODEL is not set.")
+                return False
+
+            chatbot = HuggingFaceChatBot(
+                config.HUGGING_FACE_TOKEN, config.HUGGING_FACE_MODEL)
+
+        current_bot = new_bot
+        return True
+
+    except Exception as e:
+        logger.exception(f"change_bot error:  {type(e).__name__} - {e}")
+        return False
 
 
 def change_channel_monitor_mode(new_mode):
@@ -824,7 +845,12 @@ def main():
     args = parser.parse_args()
 
     # Set default bot
-    change_bot(args.bot)
+    success = change_bot(args.bot)
+
+    # Exit if fail to create bot
+    if not success:
+        logger.error(f"Fail to create bot '{args.bot}' on start, exiting...")
+        return
 
     # Set default model
     if args.model:
@@ -839,7 +865,12 @@ def main():
     # Restore variables from config
     restore_from_config()
 
-    client.run(config.DISCORD_TOKEN, log_handler=None)
+    # Start dicord client
+    try:
+        client.run(config.DISCORD_TOKEN, log_handler=None)
+    except Exception as e:
+        logger.exception(f"Fail to run discord client:  {type(e).__name__} - {e}")
+        return
 
 
 if __name__ == '__main__':

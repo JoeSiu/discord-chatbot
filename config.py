@@ -51,16 +51,28 @@ def reset_config():
     save_config()
 
 
-# Load Discord and Hugging Face tokens from environment variables
+# Load Discord settings from environment variables
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
-HUGGING_FACE_MODEL = os.getenv("HUGGING_FACE_MODEL")
 
 # Load POE settings from environment variables
 POE_TOKEN = os.getenv("POE_TOKEN")
 POE_MODEL = os.getenv("POE_MODEL")
 POE_PROXY = os.getenv("POE_PROXY")
 
-# Load debug mode setting from environment variables
+# Load Hugging Face settings from environment variables
+HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
+HUGGING_FACE_MODEL = os.getenv("HUGGING_FACE_MODEL")
+
+# Load development setting from environment variables
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "t")
 LOGGING_LEVEL = int(os.getenv("LOGGING_LEVEL", logging.INFO))
+
+# Clear default
+if DISCORD_TOKEN == "[TOKEN HERE]":
+    DISCORD_TOKEN = ""
+
+if POE_TOKEN == "[TOKEN HERE]":
+    POE_TOKEN = ""
+
+if HUGGING_FACE_TOKEN == "[TOKEN HERE]":
+    HUGGING_FACE_TOKEN = ""
