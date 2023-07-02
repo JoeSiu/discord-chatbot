@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from dotenv import load_dotenv
 
@@ -62,3 +63,4 @@ POE_PROXY = os.getenv("POE_PROXY")
 
 # Load debug mode setting from environment variables
 DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "t")
+LOGGING_LEVEL = int(os.getenv("LOGGING_LEVEL", logging.INFO))

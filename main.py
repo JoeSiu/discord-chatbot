@@ -15,7 +15,7 @@ from chatbots.poe_chatbot import PoeChatBot
 
 # Configure logging
 logging.getLogger().handlers.clear()  # Remove root logger stream output
-discord.utils.setup_logging(level=logging.INFO)
+discord.utils.setup_logging(level=config.LOGGING_LEVEL)
 logger = logging.getLogger('discord')
 handler = logging.handlers.RotatingFileHandler(
     filename='discord.log',
