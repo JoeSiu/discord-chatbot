@@ -69,7 +69,7 @@ current_channel_monitor_mode = ChannelMonitorMode.ALL  # Current monitor mode
 current_name_prefix_mode = True  # Current name prefix mode
 
 
-@tree.command(name="send_to_channel", description="Send a message to the bot in a channel without showing your message")
+@tree.command(name="send-to-channel", description="Send a message to the bot in a channel without showing your message")
 async def handle_send_to_channel_command(interaction, user_input: str, channel: discord.TextChannel, delay: float = 0.0, show_input: bool = True):
     """
     Command to send a message to the current bot in a channel without showing your message.
@@ -77,17 +77,17 @@ async def handle_send_to_channel_command(interaction, user_input: str, channel: 
     try:
         # Defer sending message as query takes time
         await interaction.response.defer()
-        
+
         if (delay > 0.0):
             logger.info(
                 f"Recieved /send_to_channel command with {delay} seconds delay...")
             await asyncio.sleep(delay)
-        
+
         # Send user input in embeds for preview
         if show_input:
             embeds = create_embeds(user_input)
             await interaction.followup.send(content=f"> The following message had been sent to channel `{channel.name} ({channel.id})`.", embeds=embeds)
-        
+
         async with channel.typing():
             # Add name prefix
             if current_name_prefix_mode:
@@ -97,7 +97,7 @@ async def handle_send_to_channel_command(interaction, user_input: str, channel: 
                     f"{author_name}: ", user_input)
 
             logger.info(
-                f"Input from {interaction.user.name} to channel {channel.name} ({channel.id}) (via /send_to_channel): {user_input}")
+                f"Input from {interaction.user.name} to channel {channel.name} ({channel.id}) (via /send-to-channel): {user_input}")
 
             status, response = await query(user_input)
 
@@ -164,6 +164,21 @@ async def handle_get_bot_command(interaction):
         await interaction.response.send_message(f"> Sorry, an error occured while trying to get bot.\n\n`{type(e).__name__} - {e}`")
 
 
+@tree.command(name="get-available-bot", description="Get available chatbot")
+async def handle_get_available_bot_command(interaction):
+    """
+    Command to get available chatbot.
+    """
+    try:
+        bots = ", ".join([bot.value for bot in BotType])
+        message = f"> Available chatbot: `{bots}`."
+        logger.info(message)
+        await interaction.response.send_message(message)
+    except Exception as e:
+        logger.exception(f"get_bot error:  {type(e).__name__} - {e}")
+        await interaction.response.send_message(f"> Sorry, an error occured while trying to get available bot.\n\n`{type(e).__name__} - {e}`")
+
+
 @tree.command(name="change-bot", description="Change the current bot")
 async def handle_change_bot_command(interaction, bot_name: str = None):
     """
@@ -211,6 +226,21 @@ async def handle_reset_bot_command(interaction):
     except Exception as e:
         logger.exception(f"reset_bot error:  {type(e).__name__} - {e}")
         await interaction.followup.send(f"> Sorry, an error occured while trying to reset bot.\n\n`{type(e).__name__} - {e}`")
+
+
+@tree.command(name="get-available-model", description="Get the current chatbot available model")
+async def handle_get_availble_model_command(interaction):
+    """
+    Command to get the current availble chatbot model.
+    """
+    try:
+        model_names = chatbot.get_available_models()
+        message = f"> Availble chatbot model: `{model_names}`."
+        logger.info(message)
+        await interaction.response.send_message(message)
+    except Exception as e:
+        logger.exception(f"get_model error:  {type(e).__name__} - {e}")
+        await interaction.response.send_message(f"> Sorry, an error occured while trying to get availble model.\n\n`{type(e).__name__} - {e}`")
 
 
 @tree.command(name="get-model", description="Get the current chatbot model")
@@ -383,7 +413,7 @@ async def handle_enable_channel_monitoring_command(interaction, channel: discord
 
 
 @tree.command(name="disable-channel-monitoring", description="Disable monitoring of the current channel")
-async def handle_disable_channel_monitoring_command(interaction,channel: discord.TextChannel = None):
+async def handle_disable_channel_monitoring_command(interaction, channel: discord.TextChannel = None):
     """
     Command to disable the current channel monitoring.
     """
@@ -819,7 +849,7 @@ def restore_from_config():
             channel_blacklist = config.data["channel_blacklist"].copy()
 
             logger.info(
-                f"Restored from config file {config.CONFIG_FILE}, nicknames: {nicknames}, channel_whitelist: {channel_whitelist}, channel_blacklist: {channel_blacklist}")
+                f"Restored config from config file {config.CONFIG_FILE}")
 
         else:
             logger.info(f"Created config file {config.CONFIG_FILE}")
