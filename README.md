@@ -1,5 +1,7 @@
 # Discord ChatBot
 
+### Update: As the [Unoffical Poe API](https://github.com/ading2210/poe-api) had been archived and is not working, the Poe bot will not work now.
+
 ## Description
 
 The Discord ChatBot is a Python-based chatbot that supports following:
