@@ -3,6 +3,6 @@
 # platform: win-64
 
 discord~=2.3.2
-python-dotenv~=1.0.0
+python-dotenv~=1.0.1
 requests~=2.31.0
 poe-api~=0.5.2
